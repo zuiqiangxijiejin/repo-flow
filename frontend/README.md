@@ -17,13 +17,13 @@ pnpm build
 
 ## Project structure
 
-| 路径 | 内容 |
-| --- | --- |
-| `src/app` | 路由与页面 |
-| `src/components/workspace` | 导航、输入、消息、面板、设置和能力目录 |
-| `src/components/ui`、`src/components/ai-elements` | 生成的基础组件 |
-| `src/core` | API、账号、模型能力、消息处理与扩展加载 |
-| `src/content` | 可选的内置中英文文档站 |
-| `tests/unit`、`tests/e2e` | 单元测试和浏览器测试 |
+| 路径                                              | 内容                                    |
+| ------------------------------------------------- | --------------------------------------- |
+| `src/app`                                         | 路由与页面                              |
+| `src/components/workspace`                        | 导航、输入、消息、面板、设置和能力目录  |
+| `src/components/ui`、`src/components/ai-elements` | 生成的基础组件                          |
+| `src/core`                                        | API、账号、模型能力、消息处理与扩展加载 |
+| `src/content`                                     | 可选的内置中英文文档站                  |
+| `tests/unit`、`tests/e2e`                         | 单元测试和浏览器测试                    |
 
 界面约定见 [DESIGN.md](DESIGN.md)，编辑前阅读 [AGENTS.md](AGENTS.md)。产品文档见[项目文档目录](../docs/README.md)。

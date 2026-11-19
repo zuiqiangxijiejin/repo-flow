@@ -40,5 +40,7 @@ make check-agent-guidance
 | PR 按钮不可用 | 阅读旁边的状态说明，检查未保存目标、未推送提交或已有 PR |
 | 对话看似缺少历史 | 确认账号与线程，检查历史分页和持久化状态；不要删除数据库来排错 |
 | SSH 失败 | 在 SSH 主机设置验证地址、端口、用户名、认证与主机密钥确认 |
+| 首次发布时 Skill Review CI 拦截已登记例外 | 首次提交没有可信基准，不能用本次提交中的例外批准自身；核实具体规则、文件哈希与例外后，后续提交才能从已有基准读取例外。不要关闭审查或加入个人 API Key 来消除告警 |
+| 扩展 CI 提示找不到 pytest | 检查测试类型：Python 测试使用扩展的 `dev` 依赖和 pytest，浏览器 `.test.mjs` 测试使用 Node.js；浏览器测试包不应被强制安装 Python 测试工具 |
 
 进一步参阅[部署参考](deployment.md)、[安全参考](security.md)和[服务拓扑](../agent-service-topology.md)。

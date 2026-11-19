@@ -43,7 +43,9 @@ test("opens and removes saved repositories from the sidebar", async () => {
       throw new Error("Unexpected action " + action);
     },
   );
-  const navigate = rs.fn(async (_id: string, _signal: AbortSignal) => undefined);
+  const navigate = rs.fn(
+    async (_id: string, _signal: AbortSignal) => undefined,
+  );
   const onError = rs.fn();
   const cleanup = mountSurface(
     container,

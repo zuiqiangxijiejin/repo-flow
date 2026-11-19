@@ -1,4 +1,4 @@
-# Configuration for the DeerFlow application
+# Configuration for the RepoFlow application
 #
 # Guidelines:
 # - Copy this file to `config.yaml` and customize it for your environment
@@ -91,7 +91,7 @@ logging:
 # Token Usage
 # ============================================================================
 # Enable token usage collection and display.
-# When enabled, DeerFlow records input/output/total tokens per model call
+# When enabled, RepoFlow records input/output/total tokens per model call
 # and shows usage metadata in the workspace UI when providers return it.
 token_usage:
   enabled: true
@@ -232,7 +232,7 @@ models:
   # are still forwarded to ChatOllama.
   #
   # `supports_thinking` / `supports_reasoning_effort` only say whether a knob
-  # exists. Models whose provider contract differs from DeerFlow's generic
+  # exists. Models whose provider contract differs from RepoFlow's generic
   # assumptions can declare a `reasoning:` block instead; the two booleans are
   # then derived from it and every model-creation path (chat, summarization,
   # title generation, subagents) enforces the same normalized policy:
@@ -246,7 +246,7 @@ models:
   #     effort:
   #       values: [low, medium, high]  # provider vocabulary, in display order
   #       default: medium              # applied when the caller does not choose
-  #       aliases: {minimal: low}      # DeerFlow generic value -> provider value
+  #       aliases: {minimal: low}      # RepoFlow generic value -> provider value
   #       path: reasoning_effort       # dotted identifier path (default)
   #
   # `required` thinking never receives a disable payload, unknown effort values
@@ -267,7 +267,7 @@ models:
   #
   # GLM-5.3-Flash cannot disable thinking and only accepts low/high/max effort.
   # The contract keeps thinking on for every foreground and background call,
-  # maps DeerFlow's generic minimal/medium presets onto low/high, and
+  # maps RepoFlow's generic minimal/medium presets onto low/high, and
   # serializes clear_thinking=true so the model does not require exact
   # reasoning replay after summarization. `default: high` keeps background
   # calls off the provider's deepest budget; `max` stays selectable in the UI.
@@ -393,7 +393,7 @@ models:
   #
   # If llama-server was started with --api-key, replace the placeholder with
   # that key (prefer an environment variable). In Docker, localhost is the
-  # DeerFlow container itself; use an address reachable from the container,
+  # RepoFlow container itself; use an address reachable from the container,
   # for example on Docker Desktop:
   #   base_url: http://host.docker.internal:8080/v1
 
@@ -589,9 +589,9 @@ models:
   #   supports_thinking: true
   #   # PatchedChatMiniMax is the MiniMax adapter: it enables reasoning_split and
   #   # maps MiniMax's structured reasoning_details and native reasoning_content
-  #   # into the reasoning_content field DeerFlow understands, and it strips the
+  #   # into the reasoning_content field RepoFlow understands, and it strips the
   #   # per-message `name` field that
-  #   # DeerFlow middlewares attach — MiniMax rejects requests whose user-message
+  #   # RepoFlow middlewares attach — MiniMax rejects requests whose user-message
   #   # names differ with "user name must be consistent (2013)". Declare the
   #   # thinking toggle so non-thinking paths (flash mode, follow-up suggestions,
   #   # title/memory generation) truly disable reasoning instead of spending
@@ -609,7 +609,7 @@ models:
   # effect (per MiniMax docs), so the toggle above is omitted for M2.7. The
   # follow-up-suggestions endpoint strips inline <think> defensively regardless.
   # Still use the PatchedChatMiniMax adapter: it strips the per-message `name`
-  # field DeerFlow middlewares attach, which MiniMax otherwise rejects with
+  # field RepoFlow middlewares attach, which MiniMax otherwise rejects with
   # "user name must be consistent (2013)".
   # - name: minimax-m2.7
   #   display_name: MiniMax M2.7
@@ -654,9 +654,9 @@ models:
   #   supports_thinking: true
   #   # PatchedChatMiniMax is the MiniMax adapter: it enables reasoning_split and
   #   # maps MiniMax's structured reasoning_details and native reasoning_content
-  #   # into the reasoning_content field DeerFlow understands, and it strips the
+  #   # into the reasoning_content field RepoFlow understands, and it strips the
   #   # per-message `name` field that
-  #   # DeerFlow middlewares attach — MiniMax rejects requests whose user-message
+  #   # RepoFlow middlewares attach — MiniMax rejects requests whose user-message
   #   # names differ with "user name must be consistent (2013)". Declare the
   #   # thinking toggle so non-thinking paths (flash mode, follow-up suggestions,
   #   # title/memory generation) truly disable reasoning instead of spending
@@ -674,7 +674,7 @@ models:
   # effect (per MiniMax docs), so the toggle above is omitted for M2.7. The
   # follow-up-suggestions endpoint strips inline <think> defensively regardless.
   # Still use the PatchedChatMiniMax adapter: it strips the per-message `name`
-  # field DeerFlow middlewares attach, which MiniMax otherwise rejects with
+  # field RepoFlow middlewares attach, which MiniMax otherwise rejects with
   # "user name must be consistent (2013)".
   # - name: minimax-m2.7
   #   display_name: MiniMax M2.7
@@ -772,7 +772,7 @@ models:
   #   temperature: 0.7
 
   # Example: vLLM 0.19.0 (OpenAI-compatible, with reasoning toggle)
-  # DeerFlow's vLLM provider preserves vLLM reasoning across tool-call turns and
+  # RepoFlow's vLLM provider preserves vLLM reasoning across tool-call turns and
   # toggles Qwen-style reasoning by writing
   # extra_body.chat_template_kwargs.enable_thinking=true/false.
   # Some reasoning models also require the server to be started with
@@ -1119,7 +1119,7 @@ tools:
   #     -e CRAWL4AI_API_TOKEN=$CRAWL4AI_TOKEN unclecode/crawl4ai:0.9.2
   # Crawl4AI >= 0.9 is secure-by-default: a bearer token is REQUIRED on every request
   # except GET /health, and a server started without CRAWL4AI_API_TOKEN binds 127.0.0.1
-  # only (so a container/remote DeerFlow cannot reach it at all). Set the same value in
+  # only (so a container/remote RepoFlow cannot reach it at all). Set the same value in
   # the server env and in `token:` below, or requests fail with HTTP 401.
   # Use >= 0.8.7: earlier images, including 0.8.6, carry known pre-auth RCEs.
   # For Docker deployments, use the Docker service name instead of localhost.
@@ -1190,7 +1190,7 @@ tools:
   #   #                                # pinned egress proxy every launched browser connects through.
   #   # cdp_url: http://127.0.0.1:9222 # Attach to YOUR running Chrome (Codex-style)
   #   # allow_unguarded_cdp: false      # REQUIRED true with cdp_url: attaching to an
-  #   #                                # existing Chrome prevents DeerFlow from
+  #   #                                # existing Chrome prevents RepoFlow from
   #   #                                # enforcing its subresource/redirect SSRF guard.
   #   #                                # instead of launching a private headless one.
   #   #                                # Start Chrome with --remote-debugging-port=9222
@@ -1862,12 +1862,12 @@ sandbox:
 #   #     container_path: /home/user/shared
 #   #     read_only: false
 #   #
-#   #   # DeerFlow will surface configured container_path values to the agent,
+#   #   # RepoFlow will surface configured container_path values to the agent,
 #   #   # so it can directly read/write mounted directories such as /home/user/shared
 #
 #   # Optional: Environment variables to inject into the sandbox container
 #   # Values starting with $ will be resolved from host environment variables
-#   # AIO semver images default MAX_SHELL_SESSIONS to 10. DeerFlow leaves that
+#   # AIO semver images default MAX_SHELL_SESSIONS to 10. RepoFlow leaves that
 #   # image default unchanged while subagent_runtime.max_running + 1 fits, and
 #   # otherwise injects the required value for local and provisioner sandboxes.
 #   # An explicit value is allowed but must be at least max_running + 1.
@@ -2193,7 +2193,7 @@ hitl_approval:
 #     # timeout_seconds: 1800            # Abort + kill the subprocess if it doesn't respond in time (default: 1800 = 30 min)
 #
 #   claude_code:
-#     # DeerFlow expects an ACP adapter here. The standard `claude` CLI does not
+#     # RepoFlow expects an ACP adapter here. The standard `claude` CLI does not
 #     # speak ACP directly. Install `claude-agent-acp` separately or use:
 #     command: npx
 #     args: ["-y", "@zed-industries/claude-agent-acp"]
@@ -2205,7 +2205,7 @@ hitl_approval:
 #     #   ANTHROPIC_API_KEY: $ANTHROPIC_API_KEY  # $VAR resolves from host environment
 #
 #   codex:
-#     # DeerFlow expects an ACP adapter here. The standard `codex` CLI does not
+#     # RepoFlow expects an ACP adapter here. The standard `codex` CLI does not
 #     # speak ACP directly. Install `codex-acp` separately or use:
 #     command: npx
 #     args: ["-y", "@zed-industries/codex-acp"]
@@ -2338,7 +2338,7 @@ summarization:
   # Set to null to skip trimming (not recommended for very long conversations)
   trim_tokens_to_summarize: 15564
 
-  # Custom summary prompt template (null = use DeerFlow's built-in prompt)
+  # Custom summary prompt template (null = use RepoFlow's built-in prompt)
   # The prompt should guide the model to extract important context
   summary_prompt: null
 
@@ -2484,8 +2484,8 @@ memory:
   #
   # OpenViking example (replace this DeerMem backend_config block when
   # manager_class is openviking). This first official-adapter integration uses
-  # one credential-bound OpenViking USER key for one DeerFlow user and supports
-  # middleware mode only. Use owner_user_id: default when DeerFlow auth is off.
+  # one credential-bound OpenViking USER key for one RepoFlow user and supports
+  # middleware mode only. Use owner_user_id: default when RepoFlow auth is off.
   #
   # backend_config:
   #   base_url: http://openviking:1933
@@ -2507,7 +2507,7 @@ memory:
   #       user profile preferences important entities events ongoing goals
   #       constraints and prior decisions
   #
-  # For a host-installed OpenViking used by Docker DeerFlow, set base_url to
+  # For a host-installed OpenViking used by Docker RepoFlow, set base_url to
   # http://host.docker.internal:1933 and allow_insecure_http: true. The bundled
   # optional Compose overlay uses the internal http://openviking:1933 address.
   #
@@ -2669,7 +2669,7 @@ skill_evolution:
 # ============================================================================
 # Legacy standalone checkpointer config. Kept for backward compatibility.
 # Prefer the unified `database` section below, which drives the LangGraph
-# checkpointer, LangGraph Store, and DeerFlow application data (runs,
+# checkpointer, LangGraph Store, and RepoFlow application data (runs,
 # feedback, events) from a single backend setting.
 #
 # If both `checkpointer` and `database` are present, `checkpointer`
@@ -2691,13 +2691,13 @@ skill_evolution:
 # Database
 # ============================================================================
 # Unified storage backend for the LangGraph checkpointer, LangGraph Store,
-# and DeerFlow application data (runs, threads metadata, feedback, etc.).
+# and RepoFlow application data (runs, threads metadata, feedback, etc.).
 #
 # backend: memory  -- No persistence, data lost on restart
 # backend: sqlite  -- Single-node deployment, files in sqlite_dir
 # backend: postgres -- Production multi-node deployment
 #
-# If this section is omitted or empty in config.yaml, DeerFlow uses:
+# If this section is omitted or empty in config.yaml, RepoFlow uses:
 #   backend: sqlite
 #   sqlite_dir: .deer-flow/data
 #
@@ -2728,7 +2728,7 @@ skill_evolution:
 #
 # NOTE: When both `checkpointer` and `database` are configured,
 # `checkpointer` takes precedence for the LangGraph checkpointer and Store;
-# `database` still controls DeerFlow application data.
+# `database` still controls RepoFlow application data.
 # If you use `database`, you can remove the `checkpointer` section.
 # database:
 #   backend: sqlite
@@ -2737,20 +2737,20 @@ skill_evolution:
 # database:
 #   backend: postgres
 #   postgres_url: $DATABASE_URL
-#   # Optional: place DeerFlow ORM tables and LangGraph checkpointer/store
+#   # Optional: place RepoFlow ORM tables and LangGraph checkpointer/store
 #   # tables in this schema. Leave empty to use the server default
 #   # search_path, usually public.
 #   postgres_schema: deerflow
 #
-# postgres_schema only takes effect for new tables. On startup DeerFlow runs
+# postgres_schema only takes effect for new tables. On startup RepoFlow runs
 # CREATE SCHEMA IF NOT EXISTS and pins the connection search_path; it never
 # moves existing tables, so third-party tables in `public` are left untouched.
 #
 # Migrating an EXISTING deployment from `public` to a dedicated schema:
-#   1. Stop the DeerFlow services.
-#   2. Move EVERY DeerFlow-owned table AND the Alembic state into the new schema
+#   1. Stop the RepoFlow services.
+#   2. Move EVERY RepoFlow-owned table AND the Alembic state into the new schema
 #      (run as the DB owner). Missing any table strands its rows: after restart
-#      DeerFlow recreates an empty counterpart in the target schema and the old
+#      RepoFlow recreates an empty counterpart in the target schema and the old
 #      rows stay invisible in `public`. Moving the ORM tables but leaving
 #      `alembic_version` behind is especially dangerous -- bootstrap then treats
 #      the target schema as unversioned, re-baselines it, and replays migrations.
@@ -2772,8 +2772,8 @@ skill_evolution:
 #        ALTER TABLE public.scheduled_task_runs   SET SCHEMA deerflow;
 #        -- Alembic migration state (REQUIRED -- see note above):
 #        ALTER TABLE public.alembic_version       SET SCHEMA deerflow;
-#      The DeerFlow-owned set grows over time; discover any tables the list
-#      above misses (as the DeerFlow DB owner/role) with:
+#      The RepoFlow-owned set grows over time; discover any tables the list
+#      above misses (as the RepoFlow DB owner/role) with:
 #        SELECT table_name FROM information_schema.tables WHERE table_schema='public';
 #      LangGraph checkpointer/store table names also vary by version -- list them
 #      the same way, then ALTER ... SET SCHEMA deerflow for each (e.g. checkpoints,
@@ -2781,7 +2781,7 @@ skill_evolution:
 #      store_migrations).
 #   3. Set postgres_schema: deerflow here and restart.
 #   4. Verify with `SHOW search_path;` and a smoke test (create a run, read
-#      its history). The `public` schema should gain no new DeerFlow tables.
+#      its history). The `public` schema should gain no new RepoFlow tables.
 database:
   backend: sqlite
   sqlite_dir: .deer-flow/data
@@ -3096,7 +3096,7 @@ run_ownership:
 # ============================================================================
 # User-Owned IM Channel Connections
 # ============================================================================
-# Lets logged-in users connect their own IM accounts from the DeerFlow frontend
+# Lets logged-in users connect their own IM accounts from the RepoFlow frontend
 # while reusing the existing `channels` runtime configuration below.
 #
 # Security notes:
@@ -3115,9 +3115,9 @@ run_ownership:
 # channel_connections:
 #   enabled: false
 #   # Security: keep this enabled unless you intentionally want legacy open-bot behavior.
-#   # Disabling it lets unbound external IM users create DeerFlow threads/runs.
+#   # Disabling it lets unbound external IM users create RepoFlow threads/runs.
 #   require_bound_identity: true
-#   # Language (en-US or zh-CN) of DeerFlow's own IM texts: scheduled-task
+#   # Language (en-US or zh-CN) of RepoFlow's own IM texts: scheduled-task
 #   # notices and the /connect and /goal replies. Used for owners without a web
 #   # UI language preference (e.g. auth disabled) and for replies with no known
 #   # owner (an invalid connect code). Restart-required.
@@ -3154,7 +3154,7 @@ run_ownership:
 # ============================================================================
 # IM Channels Configuration
 # ============================================================================
-# Connect DeerFlow to external messaging platforms.
+# Connect RepoFlow to external messaging platforms.
 # All channels use outbound connections (WebSocket or polling) — no public IP required.
 
 # channels:
@@ -3327,8 +3327,8 @@ run_ownership:
 #     thread_mode: false               # If true, group a channel conversation into a thread
 #
 #   # Buzz (https://github.com/block/buzz) — Nostr-relay team workspace.
-#   # DeerFlow joins as a member identity; generate a keypair and register it as
-#   # a relay member, then @mention or DM DeerFlow in Buzz. Requires the `buzz`
+#   # RepoFlow joins as a member identity; generate a keypair and register it as
+#   # a relay member, then @mention or DM RepoFlow in Buzz. Requires the `buzz`
 #   # dependency extra (uv sync --extra buzz).
 #   buzz:
 #     enabled: false
@@ -3337,7 +3337,7 @@ run_ownership:
 #     allowed_users: []                     # pubkeys (hex or npub) allowed to trigger runs:
 #                                           # one pubkey (hex or npub) or a YAML list.
 #                                           # DENY-BY-DEFAULT (unlike other channels): empty
-#                                           # means nobody, and DeerFlow logs a startup warning.
+#                                           # means nobody, and RepoFlow logs a startup warning.
 #     require_mention: true                 # @mention needed in channels
 #     mention_free_channels: []             # Channel UUIDs that respond to every message:
 #                                           # one UUID (quoted or unquoted) or a YAML list.
@@ -3676,7 +3676,7 @@ authorization:
 #         token_endpoint_auth_method: client_secret_post
 #
 #         # User provisioning settings (safe defaults shown below):
-#         auto_create_users: true          # Auto-create DeerFlow account on first SSO login
+#         auto_create_users: true          # Auto-create RepoFlow account on first SSO login
 #         require_verified_email: true     # Reject SSO logins without verified email
 #         # allowed_email_domains:          # Restrict to specific email domains
 #         #   - example.com

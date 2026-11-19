@@ -39,6 +39,9 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - uses: astral-sh/setup-uv@v7
         with:
           version: '0.11.1'
@@ -53,8 +56,8 @@ jobs:
             uv run --project backend --no-sync python scripts/check_extension.py "$package"
             echo "::endgroup::"
           done
-      # Each package's own tests run in an isolated environment against this
-      # checkout's extension-api, so a contract change that breaks them fails here.
+      # Python packages use isolated environments against this checkout's API.
+      # Browser packages use Node's test runner without Python-only dev extras.
       - name: Test bundled extension packages that ship tests
         shell: bash
         run: |
@@ -63,12 +66,24 @@ jobs:
             echo "::group::Test ${package%/}"
             (
               cd "$package"
-              uv venv --python 3.12
-              uv pip install -e ../../backend/packages/extension-api
-              uv pip install -e ".[dev]"
-              uv run --no-project pytest -q
-              uv run --no-project ruff check .
-              uv run --no-project ruff format --check .
+              shopt -s nullglob globstar
+              python_tests=(tests/**/*.py)
+              node_tests=(tests/**/*.test.mjs)
+              if (( ${#python_tests[@]} )); then
+                uv venv --python 3.12
+                uv pip install -e ../../backend/packages/extension-api
+                uv pip install -e ".[dev]"
+                uv run --no-project pytest -q
+                uv run --no-project ruff check .
+                uv run --no-project ruff format --check .
+              fi
+              if (( ${#node_tests[@]} )); then
+                node --test "${node_tests[@]}"
+              fi
+              if (( ${#python_tests[@]} == 0 && ${#node_tests[@]} == 0 )); then
+                echo "::error::No supported package tests found in $package"
+                exit 1
+              fi
             )
             echo "::endgroup::"
           done

@@ -66,8 +66,8 @@ Docker Compose 在容器中运行所有服务。适用于更接近生产的本�
 ### 开发 Compose
 
 ```bash
-# 设置 deer-flow 仓库根目录的绝对路径
-export DEER_FLOW_ROOT=/path/to/deer-flow
+# 设置 RepoFlow 仓库根目录的绝对路径
+export DEER_FLOW_ROOT=/path/to/repo-flow
 
 docker compose -f docker/docker-compose-dev.yaml up --build
 ```
@@ -81,7 +81,7 @@ docker compose -f docker/docker-compose-dev.yaml up --build
 ```bash
 # .env
 OPENAI_API_KEY=sk-...
-DEER_FLOW_ROOT=/absolute/path/to/deer-flow
+DEER_FLOW_ROOT=/absolute/path/to/repo-flow
 BETTER_AUTH_SECRET=your-secret-here-min-32-chars
 ```
 
@@ -166,7 +166,7 @@ IM 通道可以通过 `config` 中的 `channels.leader_lease`（默认 `auto`）
 ```bash
 K8S_NAMESPACE=deer-flow
 SANDBOX_IMAGE=enterprise-public-cn-beijing.cr.volces.com/vefaas-public/all-in-one-sandbox:latest
-DEER_FLOW_ROOT=/absolute/path/to/deer-flow
+DEER_FLOW_ROOT=/absolute/path/to/repo-flow
 ```
 
 #### 配置沙箱提供者

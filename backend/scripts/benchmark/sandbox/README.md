@@ -1,6 +1,6 @@
 # Sandbox benchmarks
 
-Run from `backend/` with a readable, isolated DeerFlow config and runtime home.
+Run from `backend/` with a readable, isolated RepoFlow config and runtime home.
 These commands create real sandbox resources; the ordinary unit suite is offline.
 Pin the sandbox image and record the Git revision, Docker/VM capacity and config.
 Use a disposable home and never point a benchmark at a production provider.
@@ -52,7 +52,7 @@ the summary's default grouping does so. Percentiles use inclusive interpolation.
 ## OpenSandbox
 
 `--provider opensandbox` uses the production OpenSandbox provider and reads its
-connection, timeouts and environment from the selected DeerFlow configuration.
+connection, timeouts and environment from the selected RepoFlow configuration.
 Point `DEER_FLOW_CONFIG_PATH` at a disposable benchmark configuration with the
 [OpenSandbox settings](../../../packages/harness/deerflow/community/opensandbox/README.md)
 and set `DEER_FLOW_HOME` to a disposable local directory. Use a test OpenSandbox

@@ -108,6 +108,8 @@ jobs:
         if: github.event_name == 'push'
         working-directory: backend
         run: |
+          # A first import has no trusted previous manifest; proposed waivers
+          # stay inactive until a later push can read them from its base commit.
           uv run python ../scripts/review_changed_public_skills.py \
             --before "${{ github.event.before }}" \
             --after "${{ github.event.after }}"

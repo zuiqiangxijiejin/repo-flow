@@ -76,12 +76,13 @@ for (const theme of ["light", "dark"] as const) {
     const tokens = code.last().locator("code span[style]");
     await expect.poll(() => tokens.count()).toBeGreaterThan(1);
     await expect
-      .poll(async () =>
-        new Set(
-          await tokens.evaluateAll((nodes) =>
-            nodes.map((node) => getComputedStyle(node).color),
-          ),
-        ).size,
+      .poll(
+        async () =>
+          new Set(
+            await tokens.evaluateAll((nodes) =>
+              nodes.map((node) => getComputedStyle(node).color),
+            ),
+          ).size,
       )
       .toBeGreaterThan(1);
     await table.screenshot({ path: testInfo.outputPath(`table-${theme}.png`) });

@@ -7,11 +7,11 @@ knowledge-platform roadmap.
 
 ## Real environment
 
-- macOS with OrbStack; authenticated DeerFlow Gateway, Next.js and nginx.
+- macOS with OrbStack; authenticated RepoFlow Gateway, Next.js and nginx.
 - WeKnora `v0.8.3` (adapter source pin
   `3e22822c1d2397be730c458c7539d0eb8c113a24`), ParadeDB/PostgreSQL 17, Redis.
 - Official WeKnora DocReader `v0.8.3`; Neo4j `2025.10.1` with APOC.
-- GLM-5.3 using the operator's `.env.local` endpoint/credentials; DeerFlow
+- GLM-5.3 using the operator's `.env.local` endpoint/credentials; RepoFlow
   acceptance model used `chat_template_kwargs.enable_thinking=false`.
 - Local Ollama BGE-M3, 1024-dimensional vectors (actual embedding request checked).
 - LightRAG `v1.5.7` with an existing synthetic graph for retrieval regression.

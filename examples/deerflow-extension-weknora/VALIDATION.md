@@ -53,14 +53,14 @@ Secrets and local resource IDs are kept outside the repository.
 | Container reaches native Ollama | Version endpoint succeeds |
 | API health / frontend page / frontend-proxied login | HTTP 200 |
 | Catalog → selected document → live retrieval → shared evidence | Passed opt-in pytest |
-| Actual DeerFlow ToolNode with executing subagent identity | Live evidence returned |
+| Actual RepoFlow ToolNode with executing subagent identity | Live evidence returned |
 | ToolMessage serialization/replay and parent source forwarding | Valid sources preserved |
 | Source pruning after evidence removal | Empty source list |
 | Select Cedar document | Cedar marker present; Blue Whale marker absent |
 | Select Blue Whale document | Blue Whale marker present; Cedar marker absent |
 | All-accessible scope within configured base | Cedar evidence retrieved |
 | Unknown document selection | Rejected without unrestricted retry |
-| Unbound DeerFlow user | Rejected |
+| Unbound RepoFlow user | Rejected |
 | Restricted API key reads the second base | HTTP 403 |
 | Read-only API key attempts a synthetic draft write | HTTP 403; no document created |
 
@@ -68,7 +68,7 @@ The live pytest is `backend/tests/test_weknora_extension_live.py`; it supplies a
 deterministic tool call and requires an already indexed document. This tests
 real retrieval and tool/artifact integration, **not generative answer quality**.
 The separate boundary probes used the two synthetic documents described above.
-No interactive DeerFlow browser chat or external provider deployment is claimed.
+No interactive RepoFlow browser chat or external provider deployment is claimed.
 
 ## Compatibility finding fixed during this run
 

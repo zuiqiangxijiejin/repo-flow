@@ -484,7 +484,9 @@ body:has(.repoflow-workspace) [data-streamdown="table-fullscreen"] {
    every collapsed shortcut square without editing generated components. */
 @layer base {
   .repoflow-sidebar[data-collapsible="icon"] [data-sidebar="menu-button"],
-  .group[data-collapsible="icon"] .repoflow-sidebar [data-sidebar="menu-button"],
+  .group[data-collapsible="icon"]
+    .repoflow-sidebar
+    [data-sidebar="menu-button"],
   .group[data-collapsible="icon"] .repoflow-sidebar [data-sidebar="trigger"] {
     width: 2.75rem !important;
     height: 2.75rem !important;
@@ -501,7 +503,10 @@ body:has(.repoflow-workspace) [data-streamdown="table-fullscreen"] {
   justify-content: center;
   border: 1px solid var(--sidebar-border);
 }
-.group[data-collapsible="icon"] .repoflow-sidebar [data-sidebar="menu-button"] > svg {
+.group[data-collapsible="icon"]
+  .repoflow-sidebar
+  [data-sidebar="menu-button"]
+  > svg {
   width: 1.125rem;
   height: 1.125rem;
 }

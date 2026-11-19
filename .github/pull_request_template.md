@@ -57,20 +57,20 @@ Fixes #
 
 <!-- What you actually ran. Run at least the checks for the area you changed:
        Backend:   cd backend  && make lint && make test
-       Frontend:  cd frontend && pnpm format && pnpm lint && pnpm typecheck && BETTER_AUTH_SECRET=local-dev-secret pnpm build && make test
-       Frontend E2E (if you touched frontend/): cd frontend && make test-e2e -->
+       Frontend:  cd frontend && pnpm check && pnpm test && pnpm build
+       Frontend E2E (if you touched frontend/): cd frontend && pnpm test:e2e -->
 
 
 ## AI assistance
 
-<!-- DeerFlow is an AI project — most PRs here use AI coding tools, and that's
+<!-- RepoFlow is an AI project — most PRs here use AI coding tools, and that's
      welcome. Disclosing it just helps reviewers calibrate how closely to read the
      diff. Please fill all three; don't delete the section. -->
 
 **Tool(s) used:** <!-- e.g. Claude Code, Cursor, GitHub Copilot, Codex, Windsurf, or "none" -->
 
 **How you used it:** <!-- e.g. "generated the module from a spec", "autocomplete only",
-     "AI wrote tests, I wrote the impl". A prompt or conversation link is great too. -->
+     "AI wrote tests, I wrote the impl". Summarize the workflow without sharing private prompts, conversations or credentials. -->
 
 - [ ] I've read and understand every line of this change and take responsibility for it — it's not unreviewed AI output.
 

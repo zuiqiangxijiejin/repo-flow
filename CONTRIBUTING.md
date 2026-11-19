@@ -15,6 +15,7 @@
 
 ```bash
 cd frontend
+pnpm format
 pnpm check
 pnpm test
 pnpm test:e2e
@@ -28,6 +29,8 @@ make test
 make test-blocking-io
 make lint
 ```
+
+默认后端测试保持离线，不调用真实外部 API。需要验证实际供应商时，在独立测试环境准备凭据，再从 `backend/` 运行 `make test-live`；该目标显式设置 `DEER_FLOW_RUN_LIVE_TESTS=1`。不要把真实 API 测试或个人凭据加入默认 CI。
 
 根目录运行 `make check-agent-guidance` 检查目录指导文件。更细的命令和边界见各目录的指导文件。
 

@@ -1,7 +1,7 @@
 # OpenSandbox backend
 
-Runs DeerFlow sandboxes on [OpenSandbox](https://github.com/opensandbox-group/OpenSandbox),
-using the synchronous Python SDK behind DeerFlow's `Sandbox` and
+Runs RepoFlow sandboxes on [OpenSandbox](https://github.com/opensandbox-group/OpenSandbox),
+using the synchronous Python SDK behind RepoFlow's `Sandbox` and
 `SandboxProvider` contracts.
 
 ## Installation and configuration
@@ -32,7 +32,7 @@ sandbox:
 ```
 
 `api_key` and `domain` may be omitted when `OPEN_SANDBOX_API_KEY` and
-`OPEN_SANDBOX_DOMAIN` are set. `use_server_proxy` is useful when DeerFlow can
+`OPEN_SANDBOX_DOMAIN` are set. `use_server_proxy` is useful when RepoFlow can
 reach the OpenSandbox management service but cannot directly reach sandbox
 `execd` endpoints.
 
@@ -45,7 +45,7 @@ non-boolean values cause a provider startup error.
 the ingress gateway, and the server proxy, then reject endpoint requests that
 lack the sandbox's access token. The server issues the token with the endpoint
 and the SDK attaches it to every execd and file request, so no token setting is
-needed in DeerFlow. The server must run the Kubernetes runtime with
+needed in RepoFlow. The server must run the Kubernetes runtime with
 `[ingress] mode = "gateway"`; the Docker runtime and other ingress modes reject
 the create with HTTP 400.
 
@@ -94,7 +94,7 @@ count against the file limit. Each release revisits retained outputs, including
 unchanged files; equal file size does not prove equal content. Large accumulated
 output directories may reach the pass limits before all files are mirrored.
 
-Create returns only after the SDK readiness check and DeerFlow's
+Create returns only after the SDK readiness check and RepoFlow's
 `/mnt/user-data/{workspace,uploads,outputs}` bootstrap succeed. A bootstrap
 failure explicitly destroys the newly created remote sandbox.
 Each remote has an independent SDK connection transport. Before an operation,
@@ -104,11 +104,11 @@ Operations are serialized per remote so a shorter renewal cannot overwrite the
 horizon of an in-flight long command.
 Setting `sandbox_timeout: 0` selects explicit-cleanup mode and disables renewal.
 
-The full DeerFlow surface is implemented:
+The full RepoFlow surface is implemented:
 
 - `execute_command` forwards per-call environment variables and positive
   wall-clock timeouts through `RunCommandOpts`, preserving stdout, stderr, and
-  non-zero exit information in DeerFlow's string result. An explicit
+  non-zero exit information in RepoFlow's string result. An explicit
   `CommandExecError` with value `context deadline exceeded` and no numeric
   exit code ends with `Error: command timed out` and `Exit Code: 124`, keeping
   any partial output. Transport exceptions and other missing-code errors keep
@@ -121,7 +121,7 @@ The full DeerFlow surface is implemented:
   Append is serialized as a read-modify-write because SDK 0.1.x has no append
   primitive.
 - `list_dir`, `glob`, and `grep` use portable `find`/`grep` commands and the
-  shared DeerFlow result parsers.
+  shared RepoFlow result parsers.
 - All paths must be absolute and traversal-free. Artifact downloads are further
   restricted to `/mnt/user-data`.
 - Command-path HTTP 404, HTTP 410, unhealthy-session errors, and broken

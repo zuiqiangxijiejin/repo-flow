@@ -1,6 +1,6 @@
 # BoxLite backend
 
-Runs each DeerFlow sandbox as a [BoxLite](https://github.com/boxlite-ai/boxlite)
+Runs each RepoFlow sandbox as a [BoxLite](https://github.com/boxlite-ai/boxlite)
 micro-VM — a daemonless, OCI-native VM with its own kernel (libkrun/KVM on Linux,
 Hypervisor.framework on macOS). Motivated by the resource/cold-start pain with
 the default AIO Docker sandbox in
@@ -31,20 +31,20 @@ Install the optional runtime before selecting this provider:
 pip install "deerflow-harness[boxlite]"
 ```
 
-The `boxlite` package is an optional DeerFlow harness extra, not part of the
+The `boxlite` package is an optional RepoFlow harness extra, not part of the
 default install. It is also limited to the host platforms and architectures
 where BoxLite publishes wheels and can boot micro-VMs. Unsupported development
-hosts, such as Windows, should use another sandbox provider or run DeerFlow from
+hosts, such as Windows, should use another sandbox provider or run RepoFlow from
 a supported Linux/macOS environment.
 
 **Host requirement:** BoxLite boots micro-VMs, so a Linux host needs KVM — i.e.
-nested virtualization when DeerFlow runs inside a cloud VM. macOS uses
+nested virtualization when RepoFlow runs inside a cloud VM. macOS uses
 Hypervisor.framework. This is the main deployment constraint to weigh vs. the
 container-based providers.
 
 ## Design
 
-DeerFlow's `Sandbox` contract is synchronous; BoxLite's SDK is async-native and
+RepoFlow's `Sandbox` contract is synchronous; BoxLite's SDK is async-native and
 its box handles are event-loop-affine. The provider owns **one** private asyncio
 loop on a daemon thread and marshals every coroutine onto it via
 `run_coroutine_threadsafe`. BoxLite boxes are named deterministically from
@@ -75,7 +75,7 @@ inside the box and reuse `deerflow.sandbox.search`, mirroring `e2b_sandbox`:
 Command timeouts pass the same deadline to the SDK and event-loop bridge. A
 bridge deadline returns `Error: command timed out` followed by `Exit Code: 124`.
 BoxLite's `SimpleBox.exec` converts SDK wait failures to `ExecResult(exit_code=-1)`;
-if that result arrives before the bridge deadline, DeerFlow preserves `-1`.
+if that result arrives before the bridge deadline, RepoFlow preserves `-1`.
 The bridge handler catches Python's builtin `TimeoutError`, which is distinct
 from the SDK's `boxlite.TimeoutError`.
 

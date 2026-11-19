@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+import os
+import shutil
+import subprocess
 import tomllib
 from pathlib import Path
 
 import pytest
 import yaml
 from packaging.requirements import Requirement
+from support.shell import require_script_bash
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TEST_STEP = "Test bundled extension packages that ship tests"
@@ -54,6 +58,27 @@ def test_every_example_with_tests_declares_the_dev_tools_ci_runs() -> None:
     packages = _tested_packages()
     assert packages, "the extension example ships package tests"
     for package in packages:
+        if not list((package / "tests").rglob("*.py")):
+            continue
         project = tomllib.loads((package / "pyproject.toml").read_text(encoding="utf-8"))["project"]
         dev = {Requirement(value).name for value in project.get("optional-dependencies", {}).get("dev", [])}
         assert {"pytest", "ruff"} <= dev, package.name
+
+
+@pytest.mark.parametrize("passes", [True, False])
+def test_javascript_only_package_runs_node_tests_and_propagates_failures(tmp_path: Path, passes: bool) -> None:
+    if shutil.which("node") is None:
+        pytest.skip("JavaScript extension tests require Node.js")
+    tests = tmp_path / "examples" / "deerflow-extension-browser-fixture" / "tests"
+    tests.mkdir(parents=True)
+    (tests / "browser.test.mjs").write_text(
+        f'import test from "node:test";\nimport assert from "node:assert/strict";\ntest("browser package regression", () => assert.equal({str(passes).lower()}, true));\n',
+        encoding="utf-8",
+    )
+    # Dependency installation is the outer boundary. A browser-only test must
+    # run the real Node runner without trying to install Python test tools.
+    script = 'uv() { echo "unexpected Python dependency installation" >&2; return 97; };\n' + _test_step()["run"]
+    env = {key: value for key, value in os.environ.items() if key not in {"BASH_ENV", "ENV"}}
+    result = subprocess.run([require_script_bash(), "--noprofile", "--norc", "-euc", script], cwd=tmp_path, env=env, capture_output=True, text=True, encoding="utf-8")
+    assert "browser package regression" in result.stdout, result.stdout + result.stderr
+    assert (result.returncode == 0) is passes, result.stdout + result.stderr
