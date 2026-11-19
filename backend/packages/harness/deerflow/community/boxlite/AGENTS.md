@@ -5,7 +5,7 @@
   synchronous tool worker calls. Do not use the greenlet sync SDK or
   `asyncio.run()` for a recovered handle.
 - **Startup recovery only looks up existing boxes.** It lists the
-  DeerFlow-prefixed names and skips missing entries.
+  names with the compatibility prefix `deerflow-` and skips missing entries.
   `SimpleBox(reuse_existing=True)` can create a VM, so it is not an attach API.
 - **The recovered-box adapter keeps the semantics of `SimpleBox.exec`** for
   bytes, partial stream failures and failed waits. It drains stdout and stderr

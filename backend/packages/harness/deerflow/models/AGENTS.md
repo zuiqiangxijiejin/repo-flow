@@ -15,7 +15,7 @@ make test-blocking-io
 ```
 
 Provider tests drive the public sync and async calls through an offline HTTP
-transport, so they check the payload that DeerFlow sends.
+transport, so they check the payload that RepoFlow sends.
 
 ## Factory and reasoning
 

@@ -1951,6 +1951,8 @@ export interface Translations {
       };
     };
     appearance: {
+      advancedTools: string;
+      advancedToolsDescription: string;
       themeTitle: string;
       themeDescription: string;
       system: string;

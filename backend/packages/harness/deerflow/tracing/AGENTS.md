@@ -33,7 +33,7 @@ python -m pytest tests -q -k "tracing or langfuse or monocle"
   not start tracing, and `build_tracing_callbacks()` does not call the setup.
 - **The embedded client and the TUI are not instrumented.** An embedded user who
   wants Monocle traces calls `setup_monocle_tracing_if_enabled()` before the run.
-- **DeerFlow adds no per-run fields to Monocle traces.** There is no attribute
+- **RepoFlow adds no per-run fields to Monocle traces.** There is no attribute
   layer to maintain here.
 - **Monocle and Langfuse share the global provider.** The library that starts
   second attaches its span processor to the existing provider, so Monocle's

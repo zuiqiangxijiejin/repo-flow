@@ -14,12 +14,12 @@ This expands the ownership index in `frontend/src/AGENTS.md`.
   merge the main and Side Chat selection callbacks. Keep favorite buttons out
   of model-selection buttons; the two call sites continue to own their triggers
   and their distinct mode/reasoning-effort transitions.
-- `src/app/workspace/chats/[thread_id]/page.tsx` owns composer busy-state wiring.
-- `src/app/workspace/chats/[thread_id]/page.tsx` owns branch-from-turn submission and navigation; sidecar `MessageList` instances do not receive the branch action.
+- `src/components/workspace/chats/chat-page.tsx` owns composer busy-state wiring.
+- `src/components/workspace/chats/chat-page.tsx` owns branch-from-turn submission and navigation; sidecar `MessageList` instances do not receive the branch action.
 - `core/threads/thread-branch-tree.ts` projects only loaded, same-pin branch lineage into Recent chats. Missing, malformed, cross-pin, self, or cyclic parents stay top-level; unpinned groups follow their freshest descendant while pinned root order stays stable. `recent-chat-list.tsx` caps visual indentation without changing the recursive order.
-- `src/app/workspace/chats/[thread_id]/page.tsx` and `src/app/workspace/agents/[agent_name]/chats/[thread_id]/page.tsx` own edit-and-rerun submission wiring because the page must preserve normal/custom-agent run context; `MessageList` only detects the latest editable user turn and renders the inline editor.
-- `src/app/workspace/chats/[thread_id]/page.tsx` gates the Workspace Browser trigger and browser right panel on `/api/features -> browser_control.enabled`; `src/app/workspace/agents/[agent_name]/chats/[thread_id]/page.tsx` applies the same capability gate and additionally requires the Custom Agent's tool groups to be unrestricted or include `browser`. Default/failed feature discovery hides the browser control so optional backend installs do not show a dead Live socket.
-- `src/app/workspace/chats/[thread_id]/page.tsx` and `src/app/workspace/agents/[agent_name]/chats/[thread_id]/page.tsx` own active-goal display state for their composer overlays.
+- `src/components/workspace/chats/chat-page.tsx` and `src/app/workspace/agents/[agent_name]/chats/[thread_id]/page.tsx` own edit-and-rerun submission wiring because the page must preserve normal/custom-agent run context; `MessageList` only detects the latest editable user turn and renders the inline editor.
+- `src/components/workspace/chats/chat-page.tsx` gates the Workspace Browser trigger and browser right panel on `/api/features -> browser_control.enabled`; `src/app/workspace/agents/[agent_name]/chats/[thread_id]/page.tsx` applies the same capability gate and additionally requires the Custom Agent's tool groups to be unrestricted or include `browser`. Default/failed feature discovery hides the browser control so optional backend installs do not show a dead Live socket.
+- `src/components/workspace/chats/chat-page.tsx` and `src/app/workspace/agents/[agent_name]/chats/[thread_id]/page.tsx` own active-goal display state for their composer overlays.
 - `src/components/workspace/messages/message-list.tsx` owns human-input card answered/latest/pending gating; entry pages only translate a submitted card response into `sendMessage` calls.
 - `src/components/workspace/browser-view/browser-view-panel.tsx` forwards each physical pointer click as one `click` input; do not also emit `down`/`up` for the same gesture because the remote Playwright click would run twice.
 - `src/components/workspace/browser-view/use-browser-stream.ts` requests binary JPEG
@@ -36,3 +36,5 @@ This expands the ownership index in `frontend/src/AGENTS.md`.
 polling/delete-dialog provider outside that tree. Reuse stock `Sidebar`; close
 before link navigation and on pathname changes, preserving page focus. Dismissal
 restores the opener or remounted rail trigger.
+
+Normal and custom-agent conversation headers participate in layout and wrap complete titles and controls on narrow screens. The shared `chat-box.tsx` retains all right panels and drag-collapse behavior; previews stop receiving pointer input only while the parent divider is being dragged. Enabled extensions contribute navigation through `PluginNavigation`; disabled extensions add no sidebar entries.

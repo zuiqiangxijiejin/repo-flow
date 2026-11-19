@@ -8,6 +8,10 @@ import {
   UserIcon,
   PlugIcon,
   PuzzleIcon,
+  BellIcon,
+  BrainIcon,
+  InfoIcon,
+  MessageCircleIcon,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
@@ -69,6 +73,32 @@ const CapabilityCenter = dynamic(
     import("../capabilities/capability-center").then(
       (module) => module.CapabilityCenter,
     ),
+  { loading: SettingsPageLoading },
+);
+const MemorySettingsPage = dynamic(
+  () =>
+    import("./memory-settings-page").then(
+      (module) => module.MemorySettingsPage,
+    ),
+  { loading: SettingsPageLoading },
+);
+const NotificationSettingsPage = dynamic(
+  () =>
+    import("./notification-settings-page").then(
+      (module) => module.NotificationSettingsPage,
+    ),
+  { loading: SettingsPageLoading },
+);
+const ChannelsSettingsPage = dynamic(
+  () =>
+    import("./channels-settings-page").then(
+      (module) => module.ChannelsSettingsPage,
+    ),
+  { loading: SettingsPageLoading },
+);
+const AboutSettingsPage = dynamic(
+  () =>
+    import("./about-settings-page").then((module) => module.AboutSettingsPage),
   { loading: SettingsPageLoading },
 );
 
@@ -137,6 +167,18 @@ export function SettingsDialog(props: SettingsDialogProps) {
         label: t.settings.sections.subagents,
         icon: UsersRoundIcon,
       },
+      { id: "memory", label: t.settings.sections.memory, icon: BrainIcon },
+      {
+        id: "notification",
+        label: t.settings.sections.notification,
+        icon: BellIcon,
+      },
+      {
+        id: "channels",
+        label: t.settings.sections.channels,
+        icon: MessageCircleIcon,
+      },
+      { id: "about", label: t.settings.sections.about, icon: InfoIcon },
     ];
     // User management is meaningless (and confusing) for non-admins, so the
     // entry point itself is hidden; the page still guards independently in
@@ -158,6 +200,10 @@ export function SettingsDialog(props: SettingsDialogProps) {
     t.settings.sections.appearance,
     t.settings.sections.capabilities,
     t.settings.sections.subagents,
+    t.settings.sections.memory,
+    t.settings.sections.notification,
+    t.settings.sections.channels,
+    t.settings.sections.about,
   ]);
   // A `?settings=<section>` deep link (or a stale dialog store) can activate
   // a section this user's nav does not offer — e.g. user management for a
@@ -216,6 +262,10 @@ export function SettingsDialog(props: SettingsDialogProps) {
               {activeId === "capabilities" && <CapabilityCenter embedded />}
               {activeId === "appearance" && <AppearanceSettingsPage />}
               {activeId === "subagents" && <SubagentSettingsPage />}
+              {activeId === "memory" && <MemorySettingsPage />}
+              {activeId === "notification" && <NotificationSettingsPage />}
+              {activeId === "channels" && <ChannelsSettingsPage />}
+              {activeId === "about" && <AboutSettingsPage />}
             </div>
           </ScrollArea>
         </div>

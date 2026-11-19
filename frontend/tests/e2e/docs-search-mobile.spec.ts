@@ -87,6 +87,18 @@ for (const lang of ["en", "zh"]) {
       .toBeGreaterThan(beforeTouch);
     await expect(dialog).toBeVisible();
 
+    // Finish the real touch fling before selecting a result. On Chromium a
+    // tap during momentum scrolling stops the scroll without activating a link.
+    await results.evaluate(async (panel) => {
+      let previous = panel.scrollTop;
+      let stableFrames = 0;
+      while (stableFrames < 6) {
+        await new Promise(requestAnimationFrame);
+        const current = panel.scrollTop;
+        stableFrames = current === previous ? stableFrames + 1 : 0;
+        previous = current;
+      }
+    });
     await results.evaluate((panel) => {
       panel.scrollTop = 0;
     });

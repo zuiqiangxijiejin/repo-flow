@@ -4,6 +4,7 @@ import type { TokenUsageInlineMode } from "../messages/usage-model";
 import type { AgentThreadContext } from "../threads";
 
 export const DEFAULT_LOCAL_SETTINGS: LocalSettings = {
+  composer: { advancedTools: false },
   notification: {
     enabled: true,
   },
@@ -66,6 +67,7 @@ export const safeLocalStorage = {
 };
 
 export interface LocalSettings {
+  composer?: { advancedTools: boolean };
   notification: {
     enabled: boolean;
   };
@@ -93,6 +95,7 @@ export interface LocalSettings {
 function mergeLocalSettings(settings?: Partial<LocalSettings>): LocalSettings {
   return {
     ...DEFAULT_LOCAL_SETTINGS,
+    composer: { advancedTools: settings?.composer?.advancedTools === true },
     context: {
       ...DEFAULT_LOCAL_SETTINGS.context,
       ...settings?.context,

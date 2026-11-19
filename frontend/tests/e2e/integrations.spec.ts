@@ -167,8 +167,7 @@ test.describe("Integrations settings", () => {
     // Opening again from the nav menu must still use the same shared host, not
     // mount a second SettingsDialog instance.
     const sidebar = page.locator("[data-sidebar='sidebar']");
-    await sidebar.getByRole("button", { name: /Settings and more/ }).click();
-    await page.getByRole("menuitem", { name: "Settings" }).click();
+    await sidebar.getByRole("button", { name: /^Settings$/ }).click();
 
     await expect(
       page.getByRole("dialog", { name: "Settings", exact: true }),

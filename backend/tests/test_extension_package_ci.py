@@ -66,18 +66,23 @@ def test_every_example_with_tests_declares_the_dev_tools_ci_runs() -> None:
 
 
 @pytest.mark.parametrize("passes", [True, False])
-def test_javascript_only_package_runs_node_tests_and_propagates_failures(tmp_path: Path, passes: bool) -> None:
+@pytest.mark.parametrize("locked_dependencies", [True, False])
+def test_javascript_only_package_runs_node_tests_and_propagates_failures(tmp_path: Path, passes: bool, locked_dependencies: bool) -> None:
     if shutil.which("node") is None:
         pytest.skip("JavaScript extension tests require Node.js")
     tests = tmp_path / "examples" / "deerflow-extension-browser-fixture" / "tests"
     tests.mkdir(parents=True)
+    if locked_dependencies:
+        (tests.parent / "package-lock.json").write_text("{}", encoding="utf-8")
+    dependency_check = 'fs.accessSync(new URL("../.dependencies-installed", import.meta.url));' if locked_dependencies else ""
     (tests / "browser.test.mjs").write_text(
-        f'import test from "node:test";\nimport assert from "node:assert/strict";\ntest("browser package regression", () => assert.equal({str(passes).lower()}, true));\n',
+        f'import test from "node:test";\nimport assert from "node:assert/strict";\nimport fs from "node:fs";\ntest("browser package regression", () => {{ {dependency_check} assert.equal({str(passes).lower()}, true); }});\n',
         encoding="utf-8",
     )
     # Dependency installation is the outer boundary. A browser-only test must
     # run the real Node runner without trying to install Python test tools.
-    script = 'uv() { echo "unexpected Python dependency installation" >&2; return 97; };\n' + _test_step()["run"]
+    npm = 'npm() { [ "$*" = "ci --ignore-scripts --no-audit --no-fund" ] || return 98; touch .dependencies-installed; };\n'
+    script = 'uv() { echo "unexpected Python dependency installation" >&2; return 97; };\n' + npm + _test_step()["run"]
     env = {key: value for key, value in os.environ.items() if key not in {"BASH_ENV", "ENV"}}
     result = subprocess.run([require_script_bash(), "--noprofile", "--norc", "-euc", script], cwd=tmp_path, env=env, capture_output=True, text=True, encoding="utf-8")
     assert "browser package regression" in result.stdout, result.stdout + result.stderr

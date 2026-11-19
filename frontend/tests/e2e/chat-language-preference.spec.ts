@@ -13,9 +13,8 @@ async function switchLanguage(
 ) {
   await page
     .locator("[data-sidebar='sidebar']")
-    .getByRole("button", { name: /Settings and more|设置和更多/ })
+    .getByRole("button", { name: /^(Settings|设置)$/ })
     .click();
-  await page.getByRole("menuitem", { name: /^(Settings|设置)$/ }).click();
   const dialog = page.getByRole("dialog", { name: /^(Settings|设置)$/ });
   await dialog.getByRole("button", { name: /^(Appearance|外观)$/ }).click();
   await dialog.getByRole("combobox").click();

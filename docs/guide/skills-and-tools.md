@@ -512,7 +512,7 @@ The `claude-to-deerflow` skill lets you interact with a running RepoFlow instanc
 **Install the skill**:
 
 ```bash
-npx skills add https://github.com/bytedance/deer-flow --skill claude-to-deerflow
+npx skills add https://github.com/zuiqiangxijiejin/repo-flow --skill claude-to-deerflow
 ```
 
 Then make sure RepoFlow is running (default at `http://localhost:2026`) and use the `/claude-to-deerflow` command in Claude Code.

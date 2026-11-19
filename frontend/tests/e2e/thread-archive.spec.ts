@@ -169,9 +169,20 @@ for (const customAgent of [false, true]) {
       .poll(() =>
         page
           .getByText("Archived report", { exact: true })
-          .evaluate((element) => element.getBoundingClientRect().height),
+          .evaluate((element) => {
+            const title = element.getBoundingClientRect();
+            const header = element.closest("header")!.getBoundingClientRect();
+            return (
+              element.scrollWidth <= element.clientWidth &&
+              element.scrollHeight <= element.clientHeight &&
+              title.top >= header.top &&
+              title.bottom <= header.bottom &&
+              title.left >= 0 &&
+              title.right <= innerWidth
+            );
+          }),
       )
-      .toBeLessThanOrEqual(24);
+      .toBe(true);
     await page.screenshot({
       path: testInfo.outputPath("archived-header-mobile.png"),
       animations: "disabled",

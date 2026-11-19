@@ -50,7 +50,7 @@ make test-blocking-io                                  # channels share the Gate
 
 ## Identity and security
 
-- **Owner versus sender.** For a user-owned connection, the DeerFlow owner becomes
+- **Owner versus sender.** For a user-owned connection, the RepoFlow owner becomes
   the run `user_id` and the platform sender stays `channel_user_id`. Put
   `channel_user_id` in the runtime context only. `configurable` is checkpointed
   and would persist one sender's identity for the whole group thread.

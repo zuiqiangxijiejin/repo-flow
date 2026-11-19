@@ -196,6 +196,13 @@ test.describe("Sidebar navigation", () => {
         await expect(
           drawerTrigger.locator(".lucide-panel-left-close"),
         ).toBeVisible();
+        // Visibility precedes the sheet's slide animation. Finish that motion
+        // before tapping its small close control so the touch lands on it.
+        await drawer.evaluate((element) =>
+          Promise.all(
+            element.getAnimations().map((animation) => animation.finished),
+          ),
+        );
         await drawerTrigger.tap();
         await expect(drawer).toHaveCount(0);
         await expect(pageTrigger).toBeFocused();

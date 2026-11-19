@@ -8,6 +8,7 @@ import {
 } from "./utils/mock-api";
 import { expectNoRawIdentifiers } from "./utils/readable";
 import { liveMinuteTake } from "./utils/scheduled-fixtures";
+import { openWorkspaceSettings } from "./utils/workspace";
 
 test.describe.configure({ mode: "serial" });
 // The live takes were recorded in Asia/Shanghai, and interval tasks read in
@@ -77,11 +78,14 @@ async function openPage(page: Page, options: MockAPIOptions, query = "") {
 const detail = (page: Page) => page.getByTestId("scheduled-task-detail");
 const form = (page: Page) => page.getByTestId("scheduled-task-form");
 
-test("scheduled tasks page is reachable from sidebar", async ({ page }) => {
+test("scheduled tasks page is reachable from optional settings", async ({
+  page,
+}) => {
   mockLangGraphAPI(page, { threads: [], scheduledTasks: [task()] });
 
   await page.goto("/workspace/chats/new");
-  await page.getByRole("link", { name: /scheduled tasks/i }).click();
+  const settings = await openWorkspaceSettings(page, "Optional features");
+  await settings.getByRole("link", { name: /scheduled tasks/i }).click();
   await page.waitForURL("**/workspace/scheduled-tasks");
   await expect(
     page.getByRole("button", { name: /Daily summary/i }),

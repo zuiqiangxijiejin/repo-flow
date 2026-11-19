@@ -18,10 +18,7 @@ async function openSettings(page: Page, chinese = false) {
   await page.goto("/workspace/chats/new");
   await page
     .locator("[data-sidebar='sidebar']")
-    .getByRole("button", { name: chinese ? /设置和更多/ : /Settings and more/ })
-    .click();
-  await page
-    .getByRole("menuitem", { name: chinese ? "设置" : "Settings", exact: true })
+    .getByRole("button", { name: chinese ? /^设置$/ : /^Settings$/ })
     .click();
   const dialog = page.getByRole("dialog", {
     name: chinese ? "设置" : "Settings",

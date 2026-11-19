@@ -2156,6 +2156,9 @@ export const zhCN: Translations = {
       },
     },
     appearance: {
+      advancedTools: "高级输入工具",
+      advancedToolsDescription:
+        "在此设备的输入区显示引用、语音和润色工具；具体功能仍需服务器支持。",
       themeTitle: "主题",
       themeDescription: "跟随系统或选择固定的界面模式。",
       system: "系统",

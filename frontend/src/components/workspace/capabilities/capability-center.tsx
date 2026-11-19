@@ -134,6 +134,22 @@ export function CapabilityCenter({ embedded = false }: { embedded?: boolean }) {
                       {t.agents.importAgent}
                     </Button>
                   )}
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="h-auto min-h-9 whitespace-normal"
+                  >
+                    <Link href="/workspace/scheduled-tasks">
+                      {t.sidebar.scheduledTasks}
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="h-auto min-h-9 whitespace-normal"
+                  >
+                    <Link href="/workspace/usage">{t.usage.title}</Link>
+                  </Button>
                 </div>
               )}
             </div>

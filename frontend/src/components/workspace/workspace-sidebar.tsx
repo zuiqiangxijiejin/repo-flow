@@ -19,6 +19,7 @@ import { useI18n } from "@/core/i18n/hooks";
 import { useThreadActivity } from "@/core/threads/activity";
 import { cn } from "@/lib/utils";
 
+import { PluginNavigation } from "./plugin-navigation";
 import { PluginSurfaces } from "./plugin-surfaces";
 import { RecentChatList } from "./recent-chat-list";
 import { openSettingsDialog } from "./settings";
@@ -88,6 +89,7 @@ function WorkspaceSidebarContents() {
           slot="workspace-sidebar"
           threadId={thread_id === "new" ? undefined : thread_id}
         />
+        <PluginNavigation />
         {isSidebarOpen && <RecentChatList flat />}
       </SidebarContent>
       <SidebarFooter className="repoflow-sidebar-footer p-4">
@@ -95,7 +97,10 @@ function WorkspaceSidebarContents() {
           <SidebarMenuItem>
             <SidebarMenuButton
               tooltip={t.settings.title}
-              onClick={() => openSettingsDialog("account")}
+              onClick={() => {
+                if (isMobile) setOpenMobile(false);
+                openSettingsDialog("account");
+              }}
             >
               <Settings2 />
               <span>{t.settings.title}</span>

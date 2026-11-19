@@ -52,9 +52,8 @@ test("account notification setting survives clearing browser storage", async ({
     await page.goto("/workspace/chats/new");
     await page
       .locator("[data-sidebar='sidebar']")
-      .getByRole("button", { name: /Settings and more/ })
+      .getByRole("button", { name: /^Settings$/ })
       .click();
-    await page.getByRole("menuitem", { name: "Settings", exact: true }).click();
     const dialog = page.getByRole("dialog", { name: "Settings", exact: true });
     await dialog
       .getByRole("button", { name: "Notification", exact: true })

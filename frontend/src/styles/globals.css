@@ -266,6 +266,13 @@
   }
 }
 
+/* Preview frames can opt back into pointer events below the resizable library's
+ * inert panels. Keep the drag in the parent document until it is released,
+ * including when a lazy preview mounts in the middle of the gesture. */
+[data-slot="resizable-panel-group"]:has([data-separator="active"]) iframe {
+  pointer-events: none;
+}
+
 :root {
   --radius: 0.625rem;
   --background: oklch(0.9855 0.0098 87.47);

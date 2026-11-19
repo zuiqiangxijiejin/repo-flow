@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { mockLangGraphAPI } from "./utils/mock-api";
+import { openWorkspaceSettings } from "./utils/workspace";
 
 test.use({ timezoneId: "Asia/Shanghai" });
 
@@ -53,9 +54,9 @@ test("switches the usage period, sends browser offset and exposes daily details"
     route.fulfill({ json: { runs: [], has_more: false } }),
   );
   await page.goto("/workspace/chats/new");
-  await page
+  const settings = await openWorkspaceSettings(page, "Optional features");
+  await settings
     .getByRole("link", { name: "Token usage", exact: true })
-    .first()
     .click();
   await expect(page.getByTestId("usage-total-tokens")).toHaveText("3,000");
   await expect(page.getByTestId("usage-total-cost")).toHaveCount(0);
@@ -68,7 +69,7 @@ test("switches the usage period, sends browser offset and exposes daily details"
   expect(offsets.length).toBeGreaterThan(1);
   expect(offsets.every((value) => value === "480")).toBe(true);
   await expect(
-    page.getByRole("link", { name: "Token usage", exact: true }).first(),
+    page.getByRole("heading", { name: "Token usage", exact: true }),
   ).toBeVisible();
   await page.getByText("View daily details", { exact: true }).click();
   await page

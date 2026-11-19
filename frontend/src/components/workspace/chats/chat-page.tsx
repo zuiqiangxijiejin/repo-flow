@@ -9,6 +9,7 @@ import { toast } from "sonner";
 
 import { type PromptInputMessage } from "@/components/ai-elements/prompt-input";
 import { ArtifactTrigger } from "@/components/workspace/artifacts";
+import { BrowserTrigger } from "@/components/workspace/browser-view";
 import { GoalStatus } from "@/components/workspace/goal-status";
 import {
   InputBox,
@@ -24,7 +25,11 @@ import { HumanInputCard } from "@/components/workspace/messages/human-input-card
 import { PluginSurfaces } from "@/components/workspace/plugin-surfaces";
 import { SidecarProvider } from "@/components/workspace/sidecar";
 import { ThreadArchiveStatus } from "@/components/workspace/thread-archive-status";
+import { ThreadBackgroundTasks } from "@/components/workspace/thread-background-tasks";
+import { ThreadExtensionActions } from "@/components/workspace/thread-extension-actions";
 import { ThreadRunInputs } from "@/components/workspace/thread-run-inputs";
+import { ThreadScheduledTasksButton } from "@/components/workspace/thread-scheduled-tasks-button";
+import { ThreadSubagentBatches } from "@/components/workspace/thread-subagent-batches";
 import { ThreadTitle } from "@/components/workspace/thread-title";
 import { TodoList } from "@/components/workspace/todo-list";
 import { useActiveGoal } from "@/components/workspace/use-active-goal";
@@ -61,6 +66,8 @@ import { useModelControl } from "@/core/models/use-model-control";
 import { notificationBody } from "@/core/notification/body";
 import { useNotification } from "@/core/notification/hooks";
 import { useProject } from "@/core/projects";
+import { useThreadScheduledTaskEvents } from "@/core/scheduled-tasks/events";
+import { useScheduleToolResultRefresh } from "@/core/scheduled-tasks/hooks";
 import { useLocalSettings, useThreadSettings } from "@/core/settings";
 import { resolveThreadContext, selectThreadModel } from "@/core/settings/store";
 import { createThread } from "@/core/threads/api";
@@ -158,6 +165,9 @@ export default function ChatPage() {
   const [modelChoiceSummary, setModelChoiceSummary] = useState("");
   useEffect(() => setModelChoiceSummary(""), [threadId, user?.id]);
   const [localSettings] = useLocalSettings();
+  const scheduledTaskEvents = useThreadScheduledTaskEvents(threadId, {
+    enabled: !isNewThread && !isMock,
+  });
   const { enabled: browserControlEnabled } = useBrowserControlEnabled();
   const { tokenUsageEnabled } = useModels();
   const threadMetadata = useThreadMetadata(threadId, {
@@ -276,6 +286,7 @@ export default function ChatPage() {
   });
 
   const hasThreadMessages = thread.messages.length > 0;
+  useScheduleToolResultRefresh(isMock ? null : threadId, thread.messages);
   // A schedule_task result refreshes the header button and cards at once.
 
   useEffect(() => {
@@ -658,6 +669,17 @@ export default function ChatPage() {
                 )}
               </div>
               <div className="flex min-w-0 flex-wrap items-center gap-2">
+                {!isNewThread &&
+                  !isMock &&
+                  env.NEXT_PUBLIC_STATIC_WEBSITE_ONLY !== "true" && (
+                    <>
+                      <ThreadBackgroundTasks threadId={threadId} />
+                      <ThreadSubagentBatches threadId={threadId} />
+                      <ThreadScheduledTasksButton threadId={threadId} />
+                    </>
+                  )}
+                {browserEnabled && <BrowserTrigger />}
+                <ThreadExtensionActions threadId={threadId} />
                 {!isMock && (!isNewThread || !projectParam) && (
                   <PluginSurfaces slot="thread-toolbar" threadId={threadId} />
                 )}
@@ -667,6 +689,7 @@ export default function ChatPage() {
             <main className="flex min-h-0 max-w-full grow flex-col">
               <div className="flex min-h-0 flex-1 justify-center">
                 <MessageList
+                  scheduledTaskEvents={scheduledTaskEvents.data}
                   turnAvatars={{
                     initial: Array.from(
                       user?.email ?? "",
@@ -805,7 +828,7 @@ export default function ChatPage() {
                         canCancel={canStopStreaming}
                       />
                       <InputBox
-                        compact
+                        compact={localSettings.composer?.advancedTools !== true}
                         className={cn(
                           "repoflow-composer w-full",
                           isWelcomeMode && "-translate-y-2 sm:-translate-y-4",

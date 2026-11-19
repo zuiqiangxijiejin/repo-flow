@@ -34,13 +34,7 @@ const config = {
   allowedDevOrigins: getAllowedDevOrigins(),
   async redirects() {
     if (process.env.NEXT_PUBLIC_STATIC_WEBSITE_ONLY === "true") return [];
-    const retiredPages = [
-      "/blog/:path*",
-      "/:lang(en|zh)/docs/:path*",
-      "/showcase/:path*",
-      "/workspace/scheduled-tasks",
-      "/workspace/usage",
-    ];
+    const retiredPages = ["/blog/:path*", "/showcase/:path*"];
     return retiredPages.map((source) => ({
       source,
       destination: "/workspace/chats/new",

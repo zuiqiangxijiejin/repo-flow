@@ -4,6 +4,7 @@ import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 
 import { mockLangGraphAPI } from "./utils/mock-api";
+import { openWorkspaceSettings } from "./utils/workspace";
 
 const skills = [
   {
@@ -213,7 +214,12 @@ test("catalog navigation, search, details, and migrated settings", async ({
     page.getByRole("heading", { name: "能力中心", exact: true }),
   ).toBeVisible();
   await expect(page.locator("article")).toHaveCount(17);
-  await expect(page.locator("a[href='/workspace/capabilities']")).toBeVisible();
+  await expect(page.locator("a[href='/workspace/capabilities']")).toHaveCount(
+    0,
+  );
+  await expect(
+    page.getByRole("button", { name: "设置", exact: true }),
+  ).toBeVisible();
   await screenshot(page, "capability-center-plugins.png");
 
   await page
@@ -267,11 +273,12 @@ test("the skills catalog fits a mobile viewport", async ({ page }) => {
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
-  await page
-    .getByRole("button", { name: "Toggle Sidebar", exact: true })
-    .click();
+  await expect(page.locator("a[href='/workspace/capabilities']")).toHaveCount(
+    0,
+  );
+  const settings = await openWorkspaceSettings(page, "Optional features");
   await expect(
-    page.getByRole("link", { name: "Capability Center" }),
+    settings.getByRole("tab", { name: "Skills", exact: true }),
   ).toBeVisible();
 });
 

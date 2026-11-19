@@ -1,6 +1,6 @@
 # Schema migrations (`deerflow/persistence/migrations/`)
 
-Alembic revisions for the DeerFlow-owned tables, and the filters that keep
+Alembic revisions for the RepoFlow-owned tables, and the filters that keep
 LangGraph checkpointer tables and extension tables out of Alembic's view.
 `persistence/bootstrap.py::bootstrap_schema` applies them at Gateway startup, so a
 routine upgrade needs no manual Alembic command. The chain itself is

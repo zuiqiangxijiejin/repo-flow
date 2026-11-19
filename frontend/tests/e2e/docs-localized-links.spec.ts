@@ -87,7 +87,10 @@ test.describe("Localized documentation links", () => {
 
     await expect(
       page.getByRole("link", { name: "Question? Give us feedback" }),
-    ).toHaveAttribute("href", /github\.com\/bytedance\/deer-flow\/issues\/new/);
+    ).toHaveAttribute(
+      "href",
+      /github\.com\/zuiqiangxijiejin\/repo-flow\/issues\/new/,
+    );
     await expect(
       page.getByRole("link", { name: "Edit this page" }),
     ).toHaveAttribute(

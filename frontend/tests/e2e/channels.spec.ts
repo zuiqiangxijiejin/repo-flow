@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { mockLangGraphAPI } from "./utils/mock-api";
 import { setLocaleCookie } from "./utils/scheduled-fixtures";
+import { openWorkspaceSettings } from "./utils/workspace";
 
 const channelProviders = [
   ["buzz", "Buzz", "binding_code"],
@@ -94,31 +95,20 @@ function mockChannelsAPI(
 }
 
 test.describe("IM channels", () => {
-  test("sidebar and settings expose channel connections", async ({ page }) => {
+  test("settings expose channel connections without restoring sidebar cards", async ({
+    page,
+  }) => {
     mockLangGraphAPI(page);
     mockChannelsAPI(page);
 
     await page.goto("/workspace/chats/new");
 
-    const sidebar = page.locator("[data-sidebar='sidebar']");
-    await expect(sidebar.getByText("Channels")).toBeVisible({
-      timeout: 15_000,
-    });
-    await expect(sidebar.getByText("Buzz")).toBeVisible();
-    await expect(sidebar.getByText("Telegram")).toBeVisible();
-    await expect(sidebar.getByText("Slack")).toBeVisible();
-    await expect(sidebar.getByText("Discord")).toBeVisible();
-    await expect(sidebar.getByText("Feishu")).toBeVisible();
-    await expect(sidebar.getByText("DingTalk")).toBeVisible();
-    await expect(sidebar.getByText("WeChat")).toBeVisible();
-    await expect(sidebar.getByText("WeCom")).toBeVisible();
     await expect(
-      sidebar.getByRole("button", { name: "Connected" }),
-    ).toHaveCount(8);
-
-    await sidebar.getByRole("button", { name: /Settings and more/ }).click();
-    await page.getByRole("menuitem", { name: "Settings" }).click();
-    await page.getByRole("button", { name: "Channels" }).click();
+      page
+        .locator("[data-sidebar='sidebar']")
+        .getByText("Channels", { exact: true }),
+    ).toHaveCount(0);
+    await openWorkspaceSettings(page, "Channels");
 
     await expect(
       page.getByText("Buzz channels and direct messages"),
@@ -230,10 +220,15 @@ test.describe("IM channels", () => {
 
     await page.goto("/workspace/chats/new");
 
-    const sidebar = page.locator("[data-sidebar='sidebar']");
-    await expect(sidebar.getByText("Slack")).toBeVisible({ timeout: 15_000 });
-    await expect(sidebar.getByText("Discord")).toBeHidden();
-    const connectButton = sidebar.getByRole("button", { name: "Connect" });
+    const sidebar = await openWorkspaceSettings(page, "Channels");
+    await expect(sidebar.getByText("Slack", { exact: true })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(sidebar.getByText("Discord", { exact: true })).toBeHidden();
+    const connectButton = sidebar.getByRole("button", {
+      name: "Connect",
+      exact: true,
+    });
     await expect(connectButton).toBeEnabled();
 
     await connectButton.click();
@@ -251,10 +246,8 @@ test.describe("IM channels", () => {
     await setupDialog.getByRole("button", { name: "Save and connect" }).click();
 
     await expect(setupDialog).toBeHidden();
-    await expect(
-      sidebar.getByRole("button", { name: "Connected" }),
-    ).toBeVisible();
-    await sidebar.getByRole("button", { name: "Connected" }).click();
+    await expect(sidebar.getByRole("button", { name: "Modify" })).toBeVisible();
+    await sidebar.getByRole("button", { name: "Modify" }).click();
     await expect(
       page.getByRole("dialog", { name: "Modify Slack" }),
     ).toBeVisible();
@@ -300,9 +293,11 @@ test.describe("IM channels", () => {
 
     await page.goto("/workspace/chats/new");
 
-    const sidebar = page.locator("[data-sidebar='sidebar']");
-    await expect(sidebar.getByText("Slack")).toBeVisible({ timeout: 15_000 });
-    await sidebar.getByRole("button", { name: "Connect" }).click();
+    const sidebar = await openWorkspaceSettings(page, "Channels");
+    await expect(sidebar.getByText("Slack", { exact: true })).toBeVisible({
+      timeout: 15_000,
+    });
+    await sidebar.getByRole("button", { name: "Connect", exact: true }).click();
 
     const dialog = page.getByRole("dialog", { name: "Connect Slack" });
     await expect(
@@ -403,9 +398,11 @@ test.describe("IM channels", () => {
 
     await page.goto("/workspace/chats/new");
 
-    const sidebar = page.locator("[data-sidebar='sidebar']");
-    await expect(sidebar.getByText("Slack")).toBeVisible({ timeout: 15_000 });
-    await sidebar.getByRole("button", { name: "Connect" }).click();
+    const sidebar = await openWorkspaceSettings(page, "Channels");
+    await expect(sidebar.getByText("Slack", { exact: true })).toBeVisible({
+      timeout: 15_000,
+    });
+    await sidebar.getByRole("button", { name: "Connect", exact: true }).click();
 
     const setupDialog = page.getByRole("dialog", { name: "Connect Slack" });
     await expect(setupDialog).toBeVisible();
@@ -460,9 +457,11 @@ test.describe("IM channels", () => {
 
     await page.goto("/workspace/chats/new");
 
-    const sidebar = page.locator("[data-sidebar='sidebar']");
-    await expect(sidebar.getByText("Feishu")).toBeVisible({ timeout: 15_000 });
-    await sidebar.getByRole("button", { name: "Connected" }).click();
+    const sidebar = await openWorkspaceSettings(page, "Channels");
+    await expect(sidebar.getByText("Feishu", { exact: true })).toBeVisible({
+      timeout: 15_000,
+    });
+    await sidebar.getByRole("button", { name: "Modify" }).click();
 
     const setupDialog = page.getByRole("dialog", { name: "Modify Feishu" });
     await expect(setupDialog).toBeVisible();
@@ -568,9 +567,12 @@ test("WeChat QR setup keeps account binding separate and supports manual entry",
   });
 
   await page.goto("/workspace/chats/new");
-  const sidebar = page.locator("[data-sidebar='sidebar']");
+  const sidebar = await openWorkspaceSettings(page, "Channels");
   await sidebar.getByRole("button", { name: "Connect", exact: true }).click();
-  const dialog = page.getByRole("dialog");
+  const dialog = page.getByRole("dialog", {
+    name: "Connect WeChat",
+    exact: true,
+  });
   await expect(
     dialog.getByRole("img", { name: "WeChat login QR code" }),
   ).toBeAttached();
@@ -713,11 +715,12 @@ test("WeChat phone pairing code leads to persistent connection success", async (
     route.fulfill({ status: 204 }),
   );
   await page.goto("/workspace/chats/new");
-  await page
-    .locator("[data-sidebar='sidebar']")
-    .getByRole("button", { name: "Connect", exact: true })
-    .click();
-  const dialog = page.getByRole("dialog");
+  const settings = await openWorkspaceSettings(page, "Channels");
+  await settings.getByRole("button", { name: "Connect", exact: true }).click();
+  const dialog = page.getByRole("dialog", {
+    name: "Connect WeChat",
+    exact: true,
+  });
   await expect(dialog.getByLabel("Pairing code")).toBeVisible();
   expect(starts).toBe(1);
   await dialog.getByLabel("Pairing code").fill("123456");
@@ -734,7 +737,7 @@ test("WeChat phone pairing code leads to persistent connection success", async (
   await expect(dialog).not.toBeVisible();
 });
 
-for (const entry of ["sidebar", "settings"] as const) {
+for (const entry of ["deep link", "settings"] as const) {
   for (const flow of ["existing token", "manual token"] as const) {
     test(`WeChat ${flow} from ${entry} keeps binding and QR recovery in a dialog`, async ({
       page,
@@ -802,24 +805,14 @@ for (const entry of ["sidebar", "settings"] as const) {
         (route) => route.fulfill({ status: 204 }),
       );
       await page.goto("/workspace/chats/new");
-      const sidebar = page.locator("[data-sidebar='sidebar']");
-      if (entry === "settings") {
-        await sidebar
-          .getByRole("button", { name: /Settings and more/ })
-          .click();
-        await page.getByRole("menuitem", { name: "Settings" }).click();
-        await page
-          .getByRole("button", { name: "Channels", exact: true })
-          .click();
-        await page
-          .getByRole("dialog", { name: "Settings", exact: true })
-          .getByRole("button", { name: "Connect", exact: true })
-          .click();
-      } else {
-        await sidebar
-          .getByRole("button", { name: "Connect", exact: true })
-          .click();
-      }
+      const settings =
+        entry === "settings"
+          ? await openWorkspaceSettings(page, "Channels")
+          : (await page.goto("/workspace/chats/new?settings=channels"),
+            page.getByRole("dialog", { name: "Settings", exact: true }));
+      await settings
+        .getByRole("button", { name: "Connect", exact: true })
+        .click();
       const dialog = page.getByRole("dialog", {
         name: "Connect WeChat",
         exact: true,
@@ -907,17 +900,11 @@ test.describe("scheduled task updates per app", () => {
         await expect(feishuCard).not.toContainText("Feishu");
       }
 
-      // The sidebar's channel list says the same.
-      await page.keyboard.press("Escape");
+      // Connection summaries live in settings; the repository sidebar stays focused.
       const sidebar = page.locator("[data-sidebar='sidebar']");
-      const lines = sidebar.getByTestId("channel-scheduled-updates");
-      await expect(lines).toHaveCount(2);
       await expect(
-        sidebar.locator("li").filter({ hasText: copy.wecom }),
-      ).toContainText(copy.supported);
-      await expect(
-        sidebar.locator("li").filter({ hasText: copy.feishu }),
-      ).toContainText(copy.unsupported);
+        sidebar.getByTestId("channel-scheduled-updates"),
+      ).toHaveCount(0);
     });
   }
 });

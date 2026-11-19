@@ -24,7 +24,7 @@ with a reason when the binary is missing.
   the network transport, the clock. A test that raises the expected error itself
   or writes the stored result directly proves nothing about the code.
 - **Put the double below the SDK.** A fake HTTP transport under the real vendor
-  client checks the payload that DeerFlow sends. A mocked client method does not.
+  client checks the payload that RepoFlow sends. A mocked client method does not.
 - **A regression test fails on the unfixed code.** Check that before you commit
   the fix. Do not encode a known bug as expected behaviour, and do not hide it
   behind a permanent `xfail`.
@@ -65,7 +65,7 @@ with a reason when the binary is missing.
 ## Blocking-I/O tests
 
 Every test under `blocking_io/` runs with a detector that fails on a blocking
-call made on the event loop through DeerFlow code. Add a case there when you add
+call made on the event loop through RepoFlow code. Add a case there when you add
 an async entry point that touches files, subprocesses or a synchronous SDK.
 `@pytest.mark.allow_blocking_io` is for a test that needs the unguarded behaviour
 and states why.

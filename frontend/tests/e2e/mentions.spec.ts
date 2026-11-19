@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { mockLangGraphAPI, MOCK_THREAD_ID } from "./utils/mock-api";
+import { enableAdvancedInputTools } from "./utils/workspace";
 
 const composer = (page: Page) =>
   page.getByRole("textbox", { name: /how can i assist you/i });
@@ -276,6 +277,7 @@ test("mouse upload entry and mobile picker stay usable", async ({
 }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/workspace/chats/new");
+  await enableAdvancedInputTools(page);
   await page.getByTestId("mention-button").click();
   const picker = page.getByTestId("mention-picker");
   await expect(picker).toBeVisible();
@@ -316,6 +318,7 @@ for (const metadataState of ["pending", "failed"] as const) {
     );
     try {
       await page.goto("/workspace/chats/new?project=proj-1");
+      await enableAdvancedInputTools(page);
       await composer(page).fill("Read @report");
       await page.getByRole("option", { name: "report.pdf" }).click();
       await expect(page).not.toHaveURL(/\/new/);
@@ -414,6 +417,7 @@ test("polish preserves reordered overlapping reference labels and their IDs", as
     }),
   );
   await page.goto("/workspace/chats/new");
+  await enableAdvancedInputTools(page);
   const input = composer(page);
   await input.fill(
     "Use @[research](ref:skill:research) after @[research-tools](ref:skill:research-tools)",

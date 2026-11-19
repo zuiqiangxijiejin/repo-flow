@@ -49,8 +49,7 @@ async function installNotificationMock(
 async function openNotificationSettings(page: Page) {
   await page.goto("/workspace/chats/new");
   const sidebar = page.locator("[data-sidebar='sidebar']");
-  await sidebar.getByRole("button", { name: /Settings and more/ }).click();
-  await page.getByRole("menuitem", { name: "Settings" }).click();
+  await sidebar.getByRole("button", { name: /^Settings$/ }).click();
   const dialog = page.getByRole("dialog", { name: "Settings" });
   await expect(dialog).toBeVisible();
   await dialog.getByRole("button", { name: "Notification" }).click();
@@ -81,7 +80,7 @@ test.describe("Notification settings", () => {
       .poll(() => page.evaluate(() => window.__deerflowNotifications ?? []))
       .toEqual([
         {
-          title: "DeerFlow",
+          title: "RepoFlow",
           body: "This is a test notification.",
         },
       ]);

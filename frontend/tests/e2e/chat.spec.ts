@@ -5,6 +5,7 @@ import {
   MOCK_THREAD_ID,
   mockLangGraphAPI,
 } from "./utils/mock-api";
+import { enableAdvancedInputTools } from "./utils/workspace";
 
 test.describe("Project-scoped submit staleness", () => {
   test.beforeEach(async ({ page }) => {
@@ -529,6 +530,7 @@ test.describe("Chat workspace", () => {
     });
 
     await page.goto("/workspace/chats/new");
+    await enableAdvancedInputTools(page);
 
     const textarea = page.getByPlaceholder(/how can i assist you/i);
     await expect(textarea).toBeVisible({ timeout: 15_000 });
@@ -573,6 +575,7 @@ test.describe("Chat workspace", () => {
     );
 
     await page.goto("/workspace/chats/new");
+    await enableAdvancedInputTools(page);
 
     const textarea = page.getByPlaceholder(/how can i assist you/i);
     await expect(textarea).toBeVisible({ timeout: 15_000 });
@@ -612,6 +615,7 @@ test.describe("Chat workspace", () => {
     });
 
     await page.goto("/workspace/chats/new");
+    await enableAdvancedInputTools(page);
 
     const textarea = page.getByPlaceholder(/how can i assist you/i);
     await expect(textarea).toBeVisible({ timeout: 15_000 });
@@ -1214,6 +1218,7 @@ test.describe("Chat workspace", () => {
     page,
   }) => {
     await page.goto("/workspace/chats/new");
+    await enableAdvancedInputTools(page);
     const fileChooserPromise = page.waitForEvent("filechooser");
     await page.getByTestId("add-attachments-button").click();
     const fileChooser = await fileChooserPromise;

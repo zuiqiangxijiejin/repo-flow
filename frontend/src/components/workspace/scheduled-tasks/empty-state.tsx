@@ -12,10 +12,12 @@ export function NewTaskButton({
   createBlocked,
   onClick,
   variant = "default",
+  testId = "scheduled-task-new",
 }: {
   createBlocked: boolean;
   onClick: () => void;
   variant?: "default" | "outline";
+  testId?: string;
 }) {
   const { t } = useI18n();
   const st = t.scheduledTasks;
@@ -26,7 +28,7 @@ export function NewTaskButton({
         size="sm"
         disabled={createBlocked}
         onClick={onClick}
-        data-testid="scheduled-task-new"
+        data-testid={testId}
       >
         <Plus aria-hidden />
         {st.page.newTask}
@@ -59,7 +61,11 @@ export function EmptyState({
       <p className="text-muted-foreground max-w-md text-sm">
         {toolEnabled ? st.page.emptyBody : st.page.emptyBodyNoChat}
       </p>
-      <NewTaskButton createBlocked={createBlocked} onClick={onCreate} />
+      <NewTaskButton
+        createBlocked={createBlocked}
+        onClick={onCreate}
+        testId="scheduled-task-empty-new"
+      />
     </div>
   );
 }

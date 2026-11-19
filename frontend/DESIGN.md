@@ -8,7 +8,7 @@ The workspace, authentication, settings and fullscreen Markdown previews share t
 
 Success, failure and diff additions/deletions use paired light/dark tokens plus readable text or icons. File-format identity tiles may use their existing green, blue, orange and purple pairs. Rendered document content preserves the author's colors.
 
-The normal home page opens the workspace. Built-in documentation and blog routes are optional static-site surfaces; normal application redirects follow `next.config.js`. Avoid bringing back retired marketing sections as workspace navigation.
+The normal home page opens the workspace. Documentation remains reachable under the language-scoped docs routes. Blog and showcase routes are optional static-site surfaces; normal application redirects follow `next.config.js`. Optional task and usage pages open from settings. Avoid bringing back retired marketing sections as workspace navigation.
 
 ## Layout and text
 

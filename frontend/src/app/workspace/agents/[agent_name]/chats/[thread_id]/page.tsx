@@ -498,10 +498,10 @@ export default function AgentChatPage() {
         isMock={isMock}
       >
         <ChatBox threadId={threadId} browserEnabled={browserEnabled}>
-          <div className="relative flex size-full min-h-0 justify-between">
+          <div className="relative flex size-full min-h-0 flex-col justify-between">
             <header
               className={cn(
-                "absolute top-0 right-0 left-0 flex h-12 shrink-0 items-center gap-2 px-2 sm:px-4",
+                "flex min-h-14 shrink-0 flex-wrap items-center gap-2 px-3 py-3 sm:px-4",
                 isWelcomeMode
                   ? "bg-background/0 z-40 backdrop-blur-none"
                   : "bg-background/80 z-30 shadow-xs backdrop-blur",
@@ -511,14 +511,14 @@ export default function AgentChatPage() {
               {/* Agent badge */}
               <div className="flex min-w-0 shrink-0 items-center gap-1.5 rounded-md border px-2 py-1">
                 <BotIcon className="text-primary h-3.5 w-3.5" />
-                <span className="hidden max-w-24 truncate text-xs font-medium sm:inline sm:max-w-none">
+                <span className="hidden text-xs font-medium [overflow-wrap:anywhere] sm:inline">
                   {agent?.display_name?.length
                     ? agent.display_name
                     : (agent?.name ?? agent_name)}
                 </span>
               </div>
 
-              <div className="flex min-w-0 flex-1 items-center text-sm font-medium">
+              <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 text-sm font-medium">
                 <ThreadTitle
                   threadId={threadId}
                   thread={thread}
@@ -533,7 +533,7 @@ export default function AgentChatPage() {
                     />
                   )}
               </div>
-              <div className="flex shrink-0 items-center sm:mr-4">
+              <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-1">
                 {!isNewThread &&
                   !isMock &&
                   env.NEXT_PUBLIC_STATIC_WEBSITE_ONLY !== "true" && (
@@ -589,7 +589,7 @@ export default function AgentChatPage() {
                   archiveDownloadsEnabled={
                     isNewThread || isMock || threadMetadata.data != null
                   }
-                  className={cn("size-full", !isWelcomeMode && "pt-10")}
+                  className="size-full"
                   testId="main-message-list"
                   threadId={threadId}
                   thread={thread}

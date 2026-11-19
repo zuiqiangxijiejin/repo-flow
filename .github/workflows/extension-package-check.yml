@@ -78,6 +78,9 @@ jobs:
                 uv run --no-project ruff format --check .
               fi
               if (( ${#node_tests[@]} )); then
+                if [ -f package-lock.json ]; then
+                  npm ci --ignore-scripts --no-audit --no-fund
+                fi
                 node --test "${node_tests[@]}"
               fi
               if (( ${#python_tests[@]} == 0 && ${#node_tests[@]} == 0 )); then

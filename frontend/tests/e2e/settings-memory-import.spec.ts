@@ -56,8 +56,7 @@ async function openMemorySettings(page: Page) {
 
   await page.goto("/workspace/chats/new");
   const sidebar = page.locator("[data-sidebar='sidebar']");
-  await sidebar.getByRole("button", { name: /Settings and more/ }).click();
-  await page.getByRole("menuitem", { name: "Settings" }).click();
+  await sidebar.getByRole("button", { name: /^Settings$/ }).click();
 
   const settingsDialog = page.getByRole("dialog", { name: "Settings" });
   await expect(settingsDialog).toBeVisible();

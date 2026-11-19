@@ -2285,6 +2285,9 @@ export const enUS: Translations = {
       },
     },
     appearance: {
+      advancedTools: "Advanced input tools",
+      advancedToolsDescription:
+        "Show reference, voice and writing tools in the composer on this device. These tools still require server support.",
       themeTitle: "Theme",
       themeDescription:
         "Choose how the interface follows your device or stays fixed.",
