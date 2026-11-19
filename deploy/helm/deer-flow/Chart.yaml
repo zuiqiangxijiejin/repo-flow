@@ -1,0 +1,15 @@
+apiVersion: v2
+name: deer-flow
+description: RepoFlow — LangGraph-based AI super-agent (gateway + frontend + nginx + sandbox provisioner) deployed to Kubernetes.
+type: application
+version: 2.3.0-dev
+appVersion: "2.3.0-dev"
+keywords:
+  - repoflow
+  - langgraph
+  - ai-agent
+  - llm
+home: https://github.com/zuiqiangxijiejin/repo-flow
+icon: https://raw.githubusercontent.com/zuiqiangxijiejin/repo-flow/main/frontend/src/app/icon.svg
+maintainers:
+  - name: RepoFlow

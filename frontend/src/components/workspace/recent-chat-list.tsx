@@ -1,0 +1,782 @@
+"use client";
+
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  Archive,
+  Download,
+  FileJson,
+  FileText,
+  GitBranchIcon,
+  MoreHorizontal,
+  Pencil,
+  Pin,
+  PinOff,
+  Share2,
+  Trash2,
+} from "lucide-react";
+import Link from "next/link";
+import { useParams, usePathname } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import {
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuAction,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
+import { ConversationExtensionActions } from "@/components/workspace/conversation-extension-actions";
+import { getAPIClient } from "@/core/api";
+import { useAuth } from "@/core/auth/AuthProvider";
+import { hasPermission, PERMISSIONS } from "@/core/auth/permissions";
+import { writeTextToClipboard } from "@/core/clipboard";
+import {
+  useFrontendExtensions,
+  useFrontendServices,
+} from "@/core/extensions/hooks";
+import { bindFrontendServices } from "@/core/extensions/services";
+import { useI18n } from "@/core/i18n/hooks";
+import { useProjects } from "@/core/projects";
+import { useLocalSettings } from "@/core/settings";
+import { isStaticWebsiteOnly } from "@/core/static-mode";
+import { exportThread, type ThreadExportFormat } from "@/core/threads/export";
+import {
+  fetchThreadExportMessages,
+  useInfiniteThreads,
+  useMoveThreadToProject,
+  usePinThread,
+  useRenameThread,
+} from "@/core/threads/hooks";
+import { threadOriginOf } from "@/core/threads/origin";
+import {
+  flattenThreadBranches,
+  type ThreadBranchEntry,
+} from "@/core/threads/thread-branch-tree";
+import { buildThreadListModel } from "@/core/threads/thread-list-model";
+import type { AgentThread, AgentThreadState } from "@/core/threads/types";
+import {
+  channelSourceOfThread,
+  isThreadPinned,
+  pathOfThread,
+  projectIdOfThread,
+  titleOfThread,
+} from "@/core/threads/utils";
+import { env } from "@/env";
+import { isIMEComposing } from "@/lib/ime";
+import { cn } from "@/lib/utils";
+
+import { MoveToProjectMenu, NewProjectDialog } from "./move-to-project-menu";
+import {
+  ThreadOriginIcon,
+  ThreadUnreadDot,
+  unreadLabelOfThread,
+} from "./thread-channel-source";
+import { useThreadDeleteDialog } from "./thread-delete-dialog";
+import { VirtualThreadList } from "./thread-list-virtualizer";
+import { useThreadArchiveAction } from "./use-thread-archive-action";
+
+/**
+ * A single thread row in the sidebar: link + hover action menu (pin, rename,
+ * share, export, delete) + rename dialog. Shared by the flat recent-chat list
+ * and the grouped-by-project rendering in `ProjectsSection`.
+ */
+export function ThreadSidebarItem({
+  thread,
+  isActive,
+  branchEntry,
+  recentThreadId,
+  gitBranch,
+  selection,
+}: {
+  thread: AgentThread;
+  isActive: boolean;
+  branchEntry?: ThreadBranchEntry | undefined;
+  recentThreadId?: string | undefined;
+  gitBranch?: { repository: string; branch: string };
+  selection?: { checked: boolean; toggle: () => void };
+}) {
+  const { t } = useI18n();
+  const { user } = useAuth();
+  const canDeleteThreads = hasPermission(user, PERMISSIONS.THREADS_DELETE);
+  const requestDelete = useThreadDeleteDialog();
+  const { mutate: renameThread } = useRenameThread();
+  const { mutate: updatePinnedThread } = usePinThread();
+  // The move mutation is owned here (not inside `MoveToProjectMenu`) because
+  // selecting a project closes the dropdown and unmounts the menu — a
+  // per-mutate `onError` registered there would be dropped before a failed
+  // request settles, failing silently. This row persists, so a hook-level
+  // `onError` always fires. Same ownership-hoisting precedent as the
+  // `NewProjectDialog` below.
+  const { mutate: moveThreadToProject } = useMoveThreadToProject({
+    onError: (error) => {
+      toast.error(
+        error instanceof Error && error.message
+          ? error.message
+          : t.projects.moveFailed,
+      );
+    },
+  });
+
+  const handleMoveProject = useCallback(
+    (projectId: string | null) => {
+      moveThreadToProject({ threadId: thread.thread_id, projectId });
+    },
+    [moveThreadToProject, thread.thread_id],
+  );
+  const archiveAction = useThreadArchiveAction();
+
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [renameValue, setRenameValue] = useState("");
+  const [newProjectDialogOpen, setNewProjectDialogOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  const handleRenameSubmit = useCallback(() => {
+    if (renameValue.trim()) {
+      renameThread(
+        { threadId: thread.thread_id, title: renameValue.trim() },
+        {
+          onSuccess: () => {
+            setRenameDialogOpen(false);
+            setRenameValue("");
+          },
+          onError: (error) => {
+            toast.error(
+              error instanceof Error && error.message
+                ? error.message
+                : t.common.renameFailed,
+            );
+          },
+        },
+      );
+    }
+  }, [renameThread, thread.thread_id, renameValue, t.common.renameFailed]);
+
+  const handleTogglePin = useCallback(() => {
+    updatePinnedThread(
+      {
+        threadId: thread.thread_id,
+        pinned: !isThreadPinned(thread),
+      },
+      {
+        onError: (err) => {
+          toast.error(
+            err instanceof Error ? err.message : t.chats.pinChatFailed,
+          );
+        },
+      },
+    );
+  }, [t.chats.pinChatFailed, thread, updatePinnedThread]);
+
+  const handleShare = useCallback(async () => {
+    // Link to this deployment, the only place the thread exists. Never
+    // rewrite the origin to another host: the thread id would leave the
+    // deployment and the link would not open the thread.
+    const shareUrl = `${window.location.origin}${pathOfThread(thread)}`;
+    try {
+      const didCopy = await writeTextToClipboard(shareUrl);
+      if (!didCopy) {
+        toast.error(t.clipboard.failedToCopyToClipboard);
+        return;
+      }
+
+      toast.success(t.clipboard.linkCopied);
+    } catch {
+      toast.error(t.clipboard.failedToCopyToClipboard);
+    }
+  }, [t, thread]);
+
+  const handleExport = useCallback(
+    async (format: ThreadExportFormat) => {
+      setExporting(true);
+      try {
+        const messages = isStaticWebsiteOnly()
+          ? ((
+              await getAPIClient().threads.getState<AgentThreadState>(
+                thread.thread_id,
+              )
+            ).values?.messages ?? [])
+          : await fetchThreadExportMessages(thread.thread_id);
+        if (messages.length === 0) {
+          toast.error(t.conversation.noMessages);
+          return;
+        }
+        exportThread(thread, messages, format);
+        toast.success(t.common.exportSuccess);
+      } catch (error) {
+        console.error(error);
+        toast.error(t.common.exportFailed);
+      } finally {
+        setExporting(false);
+      }
+    },
+    [t, thread],
+  );
+
+  const channelSource = channelSourceOfThread(thread, t);
+  const origin = threadOriginOf(thread);
+  const pinned = isThreadPinned(thread);
+  const parentTitle = branchEntry?.parentThread
+    ? titleOfThread(branchEntry.parentThread, t.pages.untitled)
+    : null;
+  const title = titleOfThread(thread, t.pages.untitled);
+  const branchLabel = parentTitle
+    ? t.chats.branchLabel(title, parentTitle)
+    : undefined;
+  // The open thread is being read, so it never shows the dot (the chat page
+  // clears its server-side unread state).
+  const unread = thread.unread === true && !isActive;
+  const rowLabel = unread
+    ? unreadLabelOfThread(branchLabel ?? title, t, origin)
+    : branchLabel;
+
+  if (selection) {
+    return (
+      <SidebarMenuItem>
+        <label className="hover:bg-sidebar-accent flex min-h-9 cursor-pointer items-center gap-2 rounded-md px-2 text-sm">
+          <input
+            type="checkbox"
+            checked={selection.checked}
+            onChange={selection.toggle}
+            className="accent-[var(--repoflow-accent)]"
+          />
+          <span className="min-w-0 [overflow-wrap:anywhere] whitespace-normal">
+            {title}
+          </span>
+        </label>
+      </SidebarMenuItem>
+    );
+  }
+
+  return (
+    <SidebarMenuItem className="group/side-menu-item">
+      <SidebarMenuButton
+        isActive={isActive}
+        size={gitBranch ? "lg" : "default"}
+        asChild
+      >
+        <Link
+          aria-label={rowLabel}
+          className="repoflow-thread-link text-sidebar-foreground h-auto! min-h-10 min-w-0 items-start! py-2! whitespace-normal!"
+          data-unread={unread ? "true" : undefined}
+          data-branch-depth={
+            branchEntry && branchEntry.depth > 0 ? branchEntry.depth : undefined
+          }
+          data-branch-parent-id={branchEntry?.parentThread?.thread_id}
+          href={pathOfThread(thread)}
+          title={
+            gitBranch
+              ? title + " · " + gitBranch.repository + " · " + gitBranch.branch
+              : branchLabel
+          }
+        >
+          {branchEntry && branchEntry.depth > 0 && (
+            <span
+              aria-hidden="true"
+              className="text-muted-foreground/70 shrink-0 font-mono text-[10px] leading-none"
+              data-testid="thread-branch-stem"
+              style={{
+                marginLeft: `${Math.min(branchEntry.depth - 1, 1) * 8}px`,
+              }}
+            >
+              {branchEntry.isLastSibling ? "└─" : "├─"}
+            </span>
+          )}
+          <ThreadOriginIcon origin={origin} />
+          {pinned && (
+            <Pin
+              aria-hidden="true"
+              className="text-muted-foreground size-3.5 shrink-0"
+            />
+          )}
+          <span
+            className={cn(
+              "min-w-0 flex-1 overflow-visible! [overflow-wrap:anywhere] whitespace-normal!",
+              gitBranch && "flex flex-col gap-0.5",
+            )}
+          >
+            <span className="block [overflow-wrap:anywhere] whitespace-normal">
+              {title}
+            </span>
+            {gitBranch && (
+              <span className="text-muted-foreground flex min-w-0 items-center gap-1 text-xs">
+                <GitBranchIcon aria-hidden="true" className="size-3 shrink-0" />
+                <span className="min-w-0 font-mono [overflow-wrap:anywhere] whitespace-normal">
+                  {gitBranch.branch}
+                </span>
+              </span>
+            )}
+          </span>
+          {(channelSource !== null || unread) && (
+            <span className="ml-auto inline-flex shrink-0 items-center gap-1.5">
+              {channelSource && (
+                <span
+                  className="bg-sidebar-accent text-sidebar-accent-foreground inline-flex h-5 max-w-14 shrink-0 items-center rounded-md px-1.5 text-[10px] font-medium"
+                  title={t.threads.origin.fromProvider(channelSource.label)}
+                >
+                  <span className="truncate">{channelSource.label}</span>
+                </span>
+              )}
+              {unread && <ThreadUnreadDot />}
+            </span>
+          )}
+        </Link>
+      </SidebarMenuButton>
+      {env.NEXT_PUBLIC_STATIC_WEBSITE_ONLY !== "true" && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <SidebarMenuAction
+              showOnHover
+              className="bg-sidebar/90 after:left-0!"
+            >
+              <MoreHorizontal />
+              <span className="sr-only">{t.common.more}</span>
+            </SidebarMenuAction>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            className="w-48 rounded-lg"
+            side={"right"}
+            align={"start"}
+          >
+            <ConversationExtensionActions
+              context={{ thread }}
+              placement="menu"
+            />
+            <DropdownMenuItem onSelect={handleTogglePin}>
+              {pinned ? (
+                <PinOff className="text-muted-foreground" />
+              ) : (
+                <Pin className="text-muted-foreground" />
+              )}
+              <span>{pinned ? t.chats.unpinChat : t.chats.pinChat}</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => {
+                setRenameValue(titleOfThread(thread, t.pages.untitled));
+                setRenameDialogOpen(true);
+              }}
+            >
+              <Pencil className="text-muted-foreground" />
+              <span>{t.common.rename}</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => void handleShare()}>
+              <Share2 className="text-muted-foreground" />
+              <span>{t.common.share}</span>
+            </DropdownMenuItem>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger disabled={exporting}>
+                <Download className="text-muted-foreground" />
+                <span>{t.common.export}</span>
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                <DropdownMenuItem
+                  onSelect={() => void handleExport("markdown")}
+                >
+                  <FileText className="text-muted-foreground" />
+                  <span>{t.common.exportAsMarkdown}</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => void handleExport("json")}>
+                  <FileJson className="text-muted-foreground" />
+                  <span>{t.common.exportAsJSON}</span>
+                </DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+            <DropdownMenuItem
+              disabled={archiveAction.isPending}
+              onSelect={() => archiveAction.setArchived(thread.thread_id, true)}
+            >
+              <Archive className="text-muted-foreground" />
+              <span>{t.chats.archiveChat}</span>
+            </DropdownMenuItem>
+            <MoveToProjectMenu
+              thread={thread}
+              onNewProject={() => setNewProjectDialogOpen(true)}
+              onMoveProject={handleMoveProject}
+            />
+            {canDeleteThreads && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onSelect={() => requestDelete({ thread, recentThreadId })}
+                >
+                  <Trash2 className="text-muted-foreground" />
+                  <span>{t.common.delete}</span>
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+
+      {/* Rename Dialog */}
+      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>{t.common.rename}</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              placeholder={t.common.rename}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !isIMEComposing(e)) {
+                  e.preventDefault();
+                  handleRenameSubmit();
+                }
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setRenameDialogOpen(false)}
+            >
+              {t.common.cancel}
+            </Button>
+            <Button onClick={handleRenameSubmit}>{t.common.save}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* New Project Dialog (mounted outside the DropdownMenu so it survives
+          the menu closing when "New project…" is selected) */}
+      <NewProjectDialog
+        thread={thread}
+        open={newProjectDialogOpen}
+        onOpenChange={setNewProjectDialogOpen}
+      />
+    </SidebarMenuItem>
+  );
+}
+
+export function RecentChatList({ flat = false }: { flat?: boolean }) {
+  const { t } = useI18n();
+  const { user } = useAuth();
+  const requestDelete = useThreadDeleteDialog();
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(() => new Set());
+  const canBulkDelete =
+    !isStaticWebsiteOnly() && hasPermission(user, PERMISSIONS.THREADS_DELETE);
+  const selectionActive = selecting && canBulkDelete;
+  const pathname = usePathname();
+  const { thread_id: threadIdFromPath } = useParams<{
+    thread_id: string;
+    agent_name?: string;
+  }>();
+  const [settings] = useLocalSettings();
+  const groupByProject = settings.projectsDisplayMode === "grouped";
+  // Static-demo mode never renders project groups (ProjectsSection is hidden
+  // and project queries stay off), so a persisted "grouped" preference must
+  // behave as flat — otherwise assigned threads would vanish from this list.
+  const grouped = !flat && groupByProject && !isStaticWebsiteOnly();
+  const {
+    data: infiniteThreads,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteThreads({
+    archived:
+      env.NEXT_PUBLIC_STATIC_WEBSITE_ONLY === "true" ? undefined : false,
+  });
+  // Project discovery doubles as the exclusion oracle for grouped mode: an
+  // assigned thread may leave this flat list ONLY when its project group can
+  // actually render in `ProjectsSection`. Any query error (or not-yet-loaded
+  // data) yields `null` → exclude nothing (fail-visible), and a thread whose
+  // project id is unknown to both lists stays here too. TanStack dedupes
+  // these shared queries with `GroupedProjectList`.
+  // The discovery queries only feed that grouped-mode filter; in the default
+  // flat mode the results are read by nobody, so keep the two project round
+  // trips off the page load (`GroupedProjectList` fetches these same keys
+  // when grouped mode is on, and TanStack dedupes the observers).
+  const activeProjectsQuery = useProjects("active", { enabled: grouped });
+  const archivedProjectsQuery = useProjects("archived", { enabled: grouped });
+  const knownProjectIds = useMemo(() => {
+    const activeProjects = activeProjectsQuery.data;
+    const archivedProjects = archivedProjectsQuery.data;
+    if (
+      activeProjectsQuery.isError ||
+      archivedProjectsQuery.isError ||
+      !activeProjects ||
+      !archivedProjects
+    ) {
+      return null;
+    }
+    return new Set(
+      [...activeProjects, ...archivedProjects].map((project) => project.id),
+    );
+  }, [
+    activeProjectsQuery.data,
+    activeProjectsQuery.isError,
+    archivedProjectsQuery.data,
+    archivedProjectsQuery.isError,
+  ]);
+  const threadListModel = useMemo(
+    () => buildThreadListModel(infiniteThreads?.pages ?? []),
+    [infiniteThreads?.pages],
+  );
+  const { threads } = threadListModel;
+  const displayedThreads = useMemo(() => {
+    if (
+      !threadIdFromPath ||
+      threadListModel.displayedThreads.some(
+        (thread) => thread.thread_id === threadIdFromPath,
+      )
+    ) {
+      return threadListModel.displayedThreads;
+    }
+    const activeThread = threadListModel.byId.get(threadIdFromPath);
+    return activeThread
+      ? [...threadListModel.displayedThreads, activeThread]
+      : threadListModel.displayedThreads;
+  }, [threadIdFromPath, threadListModel]);
+  // In grouped mode, project-assigned threads render under their project
+  // header in `ProjectsSection`; this list keeps only unassigned threads —
+  // plus any assigned thread whose project cannot render a group (unknown id,
+  // or project discovery failed/loading), so no chat silently vanishes.
+  const visibleThreads = useMemo(
+    () =>
+      grouped && knownProjectIds
+        ? displayedThreads.filter((thread) => {
+            const projectId = projectIdOfThread(thread);
+            return projectId === null || !knownProjectIds.has(projectId);
+          })
+        : displayedThreads,
+    [grouped, displayedThreads, knownProjectIds],
+  );
+  const branchList = useMemo(() => {
+    const entries = flattenThreadBranches(visibleThreads);
+    return {
+      entriesById: new Map(
+        entries.map((entry) => [entry.thread.thread_id, entry]),
+      ),
+      threads: entries.map((entry) => entry.thread),
+    };
+  }, [visibleThreads]);
+  const services = useFrontendServices();
+  const extensions = useFrontendExtensions();
+  const extension = extensions.data?.find(
+    (entry) =>
+      entry.namespace === "repoflow.repositories" &&
+      entry.settings.enabled === true &&
+      entry.backend_actions?.includes("conversation-branches"),
+  );
+  const gitBranchIds = useMemo(
+    () => visibleThreads.slice(0, 64).map((thread) => thread.thread_id),
+    [visibleThreads],
+  );
+  const queryClient = useQueryClient();
+  const gitBranches = useQuery({
+    queryKey: ["repository-conversation-branches", user?.id, gitBranchIds],
+    enabled:
+      Boolean(extension) &&
+      user?.system_role === "admin" &&
+      gitBranchIds.length > 0,
+    retry: false,
+    staleTime: 30_000,
+    queryFn: async ({ signal }) => {
+      if (!extension) return {};
+      return (await bindFrontendServices(
+        services,
+        extension,
+        signal,
+      ).callBackend("conversation-branches", {
+        thread_ids: gitBranchIds,
+      })) as Record<string, { repository: string; branch: string }>;
+    },
+  });
+  useEffect(() => {
+    if (!extension) return;
+    function refreshBranches() {
+      void queryClient.invalidateQueries({
+        queryKey: ["repository-conversation-branches", user?.id],
+      });
+    }
+    document.addEventListener("repoflow:repository-attached", refreshBranches);
+    return () =>
+      document.removeEventListener(
+        "repoflow:repository-attached",
+        refreshBranches,
+      );
+  }, [extension, queryClient, user?.id]);
+
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const element = sentinelRef.current;
+    if (!element || !hasNextPage || !threadListModel.canLoadMore) {
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          void fetchNextPage();
+        }
+      },
+      { rootMargin: "120px 0px 120px 0px" },
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    threadListModel.canLoadMore,
+  ]);
+
+  // Grouped mode moves project threads under `ProjectsSection`, so this list
+  // can be empty while older pages (possibly holding unassigned threads) still
+  // exist on the server. Keep the pagination controls mounted then; flat mode
+  // keeps the original "empty list renders nothing" behavior.
+  if (
+    visibleThreads.length === 0 &&
+    !(grouped && hasNextPage && threadListModel.canLoadMore)
+  ) {
+    return null;
+  }
+  const selectedThreads = visibleThreads.filter((thread) =>
+    selected.has(thread.thread_id),
+  );
+  return (
+    <SidebarGroup>
+      <SidebarGroupLabel className="repoflow-history-label justify-between">
+        <span>
+          {env.NEXT_PUBLIC_STATIC_WEBSITE_ONLY !== "true"
+            ? t.sidebar.recentChats
+            : t.sidebar.demoChats}
+        </span>
+        {canBulkDelete && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setSelecting(!selectionActive);
+              setSelected(new Set());
+            }}
+          >
+            {selectionActive ? t.common.cancel : t.chats.selectChats}
+          </Button>
+        )}
+      </SidebarGroupLabel>
+      <SidebarGroupContent className="group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0">
+        {selectionActive && (
+          <div className="flex flex-wrap items-center gap-1 px-2 pb-1">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                setSelected(
+                  new Set(visibleThreads.map((thread) => thread.thread_id)),
+                )
+              }
+            >
+              {t.chats.selectLoadedChats}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={!selectedThreads.length}
+              onClick={() =>
+                requestDelete({
+                  threads: selectedThreads,
+                  recentThreadId: threads[0]?.thread_id,
+                  afterDelete: (ids) =>
+                    setSelected((previous) => {
+                      const remaining = new Set(previous);
+                      for (const id of ids) remaining.delete(id);
+                      return remaining;
+                    }),
+                })
+              }
+            >
+              {t.chats.deleteSelectedChats(selectedThreads.length)}
+            </Button>
+          </div>
+        )}
+        <SidebarMenu>
+          {/* Keep pagination at the old list boundary when this switches to virtual rows. */}
+          <div
+            className="flex w-full flex-col gap-1"
+            style={{ overflowAnchor: "none" }}
+          >
+            <VirtualThreadList
+              estimateSize={36}
+              gap={4}
+              items={branchList.threads}
+              scrollParentSelector='[data-sidebar="content"]'
+              renderItem={(thread) => (
+                <ThreadSidebarItem
+                  key={thread.thread_id}
+                  thread={thread}
+                  isActive={pathOfThread(thread) === pathname}
+                  branchEntry={branchList.entriesById.get(thread.thread_id)}
+                  recentThreadId={threads[0]?.thread_id}
+                  gitBranch={gitBranches.data?.[thread.thread_id]}
+                  selection={
+                    selectionActive
+                      ? {
+                          checked: selected.has(thread.thread_id),
+                          toggle: () =>
+                            setSelected((previous) => {
+                              const next = new Set(previous);
+                              if (next.has(thread.thread_id))
+                                next.delete(thread.thread_id);
+                              else next.add(thread.thread_id);
+                              return next;
+                            }),
+                        }
+                      : undefined
+                  }
+                />
+              )}
+            />
+            {hasNextPage && threadListModel.canLoadMore && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mx-2 my-1 w-[calc(100%-1rem)] justify-center text-xs"
+                  onClick={() => void fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  data-testid="recent-chat-list-load-more"
+                >
+                  {isFetchingNextPage
+                    ? t.chats.loadingMore
+                    : t.chats.loadOlderChats}
+                </Button>
+                <div
+                  ref={sentinelRef}
+                  aria-hidden="true"
+                  className="h-px w-full"
+                  data-testid="recent-chat-list-sentinel"
+                />
+              </>
+            )}
+          </div>
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
+  );
+}

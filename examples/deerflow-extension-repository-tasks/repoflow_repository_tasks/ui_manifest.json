@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "entry": "static/index.mjs",
+  "files": [
+    "static/index.mjs",
+    "static/styles.css",
+    "static/diff.mjs",
+    "static/account.mjs",
+    "static/publication.mjs",
+    "static/history.mjs",
+    "static/ssh.mjs",
+    "static/icons.mjs",
+    "static/workflow.mjs"
+  ]
+}

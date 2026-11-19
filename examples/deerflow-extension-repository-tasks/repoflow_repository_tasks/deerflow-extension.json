@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "repoflow.repositories",
+  "locales": {
+    "zh-CN": {
+      "title": "仓库任务",
+      "description": "在隔离工作区运行 Agent 并审阅 Git 改动。",
+      "usage": [
+        {
+          "title": "关联仓库",
+          "description": "在普通 Agent 对话顶部打开仓库，粘贴 GitHub 地址或选择已导入的仓库。"
+        },
+        {
+          "title": "审阅提交",
+          "description": "检查测试报告和 Git 差异，再确认推送贡献分支。"
+        },
+        {
+          "title": "提交 PR",
+          "description": "打开 GitHub 上已填入标题和正文的表单，并在 GitHub 提交。"
+        }
+      ]
+    },
+    "en-US": {
+      "title": "Repository tasks",
+      "description": "Run an Agent in an isolated worktree and review its Git changes.",
+      "usage": [
+        {
+          "title": "Attach a repository",
+          "description": "Open Repository in a regular Agent conversation, then paste a GitHub URL or select an imported checkout."
+        },
+        {
+          "title": "Review the commit",
+          "description": "Inspect the test report and Git diff before confirming a push to the contribution branch."
+        },
+        {
+          "title": "Submit the PR",
+          "description": "Open the prefilled GitHub form and submit the pull request on GitHub."
+        }
+      ]
+    }
+  }
+}

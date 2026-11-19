@@ -1,0 +1,23 @@
+---
+title: First Conversation
+description: Start a reviewable repository task in RepoFlow.
+---
+
+# First Conversation
+
+Follow [Quick Start](/docs/application/quick-start), sign in and check that a model is available. The default local entry is `http://localhost:2026`; use your deployment URL on a server.
+
+1. Choose **New chat** and associate your own project or a fork. Supply an upstream only when contributing to another project.
+2. Choose a model and mode, then start with:
+
+```text
+Explain this repository's structure, test commands and contribution process. Do not modify files yet.
+```
+
+3. Inspect the actual tool activity and the referenced files.
+4. Once ready, specify the change and the required verification.
+5. Review the diff and test results in Git review before deciding separately to push or create a PR.
+
+The model can use only enabled and authorized tools. A completed run does not by itself prove successful verification.
+
+Continue with [Workspace Usage](/docs/application/workspace-usage) and [Tools and Skills](/docs/tutorials/use-tools-and-skills).
